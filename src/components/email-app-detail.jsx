@@ -52,7 +52,7 @@ const EmailAppDetail = (props) => {
                                     <div className="iq-subject-info">
                                         <img src={img} className="img-fluid rounded-circle avatar-80" alt="#"/>
                                         <div className="iq-subject-status align-self-center">
-                                            <h6 className="mb-0">SocialV team <Link to="/">dummy@SocialV.com</Link></h6>
+                                            <h6 className="mb-0">Jammify team <Link to="/">dummy@jammify.com</Link></h6>
                                             <Dropdown bsPrefix="show">
                                                 <Dropdown.Toggle as={Button} variant="white" className="p-0" href="#">
                                                 to Me

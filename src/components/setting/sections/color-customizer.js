@@ -241,16 +241,16 @@ const ColorCustomizer = memo((props) => {
           <div>
             <input
               type="radio"
-              value="color-1"
+              value="color-5"
               className="btn-check"
               name="theme_color"
-              id="color-1"
-              onClick={() => colorChange("color-1")}
-              defaultChecked={colorValue.value === "color-1"}
+              id="color-5"
+              onClick={() => colorChange("color-5")}
+              defaultChecked={colorValue.value === "color-5"}
             />
             <label
               className={`btn btn-border d-block bg-transparent`}
-              htmlFor="color-1"
+              htmlFor="color-5"
               data-bs-toggle="tooltip"
               data-bs-placement="top"
               data-bs-original-title="Theme-1"

@@ -31,7 +31,7 @@ const Footer = (props) => {
                             </ul>
                         </Col>
                         <Col lg="6" className="d-flex justify-content-end">
-                            Copyright 2024 <Link to="/" className='mx-1'>SocialV</Link>All Rights Reserved.
+                            Copyright 2024 <Link to="/" className='mx-1'>Jammify</Link>Todos los derechos reservados.
                         </Col>
                     </Row>
                 </Container>

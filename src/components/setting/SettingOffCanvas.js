@@ -13,9 +13,6 @@ import * as SettingSelector from '../../store/setting/selectors'
 // Style Setting Section Components
 import ThemeScheme from './sections/theme-scheme'
 import ColorCustomizer from './sections/color-customizer'
-import MenuStyle from './sections/menu-style'
-import MenuActiveStyle from './sections/menu-active-style'
-import Direction from './sections/direction'
 
 
 const SettingOffCanvas = memo((props) => {
@@ -26,8 +23,7 @@ const SettingOffCanvas = memo((props) => {
     const themeScheme = useSelector(SettingSelector.theme_scheme)
     const themeSchemeDirection = useSelector(SettingSelector.theme_scheme_direction)
     const themeColor = useSelector(SettingSelector.theme_color)
-    const sidebarType = useSelector(SettingSelector.sidebar_type)
-    const sidebarMenuStyle = useSelector(SettingSelector.sidebar_menu_style)
+
 
     useEffect(() => {
         const onClick = (e) => {
@@ -66,18 +62,10 @@ const SettingOffCanvas = memo((props) => {
                                 </div>
                                 <div>
                                     <ThemeScheme themeScheme={themeScheme}></ThemeScheme>
-                                    {props.name === true ? '' : 
-                                    <Fragment>
-                                        <hr className="hr-horizontal" />
-                                        <MenuStyle sidebarType={sidebarType}></MenuStyle>
-                                        <hr className="hr-horizontal" />
-                                        <MenuActiveStyle sidebarMenuStyle={sidebarMenuStyle}></MenuActiveStyle>
-                                    </Fragment>
-                                    }
+                                   
                                     <hr className="hr-horizontal" />
                                     <ColorCustomizer themeColor={themeColor}></ColorCustomizer>
                                     <hr className="hr-horizontal" />
-                                    <Direction themeSchemeDirection={themeSchemeDirection}></Direction>
                                 </div>
                             </div>
                         </Col>
