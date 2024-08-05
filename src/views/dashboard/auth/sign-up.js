@@ -52,7 +52,7 @@ const SignUp = () => {
                   <ul className="swiper-wrapper list-inline m-0 p-0 ">
                     <SwiperSlide>
                       <img
-                        src={login1}
+                        src="https://31.media.tumblr.com/8ceef31f2791cc61882ca4ea2a0f559f/tumblr_nhelub15rI1rtpvcro1_500.gif"
                         className="signin-img img-fluid mb-5 rounded-3"
                         alt="images"
                       />
@@ -66,7 +66,7 @@ const SignUp = () => {
                     </SwiperSlide>
                     <SwiperSlide>
                       <img
-                        src={login2}
+                        src="https://media2.giphy.com/media/5O0NJ5MOVdLKjor2Z5/200.gif?cid=6c09b952u4ee8cpcqzt63yoxflricm74iuqaqruj4w7t7l5l&ep=v1_internal_gif_by_id&rid=200.gif&ct=g"
                         className="signin-img img-fluid mb-5 rounded-3"
                         alt="images"
                       />
@@ -80,7 +80,7 @@ const SignUp = () => {
                     </SwiperSlide>
                     <SwiperSlide>
                       <img
-                        src={login3}
+                        src="https://i.pinimg.com/originals/6f/64/da/6f64da80bc6792e200f943fdf90b253b.gif"
                         className="signin-img img-fluid mb-5 rounded-3"
                         alt="images"
                       />
