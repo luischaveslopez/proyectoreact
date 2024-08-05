@@ -45,7 +45,7 @@ SwiperCore.use([Autoplay]);
 const Music = () => {
   return (
     <>
-      <ProfileHeader title="Music" img={profilebg8} />
+      <ProfileHeader title="Music" img="{profilebg8}" />
       <div id="content-page" className="content-inner">
         <Container>
           <Row>
