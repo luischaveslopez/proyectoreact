@@ -12,7 +12,6 @@ import Error404 from "../views/dashboard/errors/error404";
 import Error500 from "../views/dashboard/errors/error500";
 
 //extrpages
-import Maintenance from "../views/dashboard/extrapages/maintenance";
 import ComingSoon from "../views/dashboard/extrapages/comingsoon";
 
 export const SimpleRouter = [
@@ -43,10 +42,6 @@ export const SimpleRouter = [
   {
     path: "errors/error500",
     element: <Error500 />,
-  },
-  {
-    path: "extra-pages/pages-maintenance",
-    element: <Maintenance />,
   },
   {
     path: "extra-pages/pages-comingsoon",

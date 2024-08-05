@@ -23,7 +23,7 @@ const ShareOffcanvas = () => {
                     <span className="material-symbols-outlined md-18">
                         share
                     </span>
-                    <span className="ms-1">99 Share</span>
+                    <span className="ms-1">1 Share</span>
                 </Link>  
             </div>
             <Offcanvas show={show} onHide={handleClose}  placement='bottom'>
