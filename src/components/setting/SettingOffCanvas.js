@@ -12,8 +12,6 @@ import * as SettingSelector from '../../store/setting/selectors'
 // Section Components
 // Style Setting Section Components
 import ThemeScheme from './sections/theme-scheme'
-import ColorCustomizer from './sections/color-customizer'
-
 
 const SettingOffCanvas = memo((props) => {
 
@@ -22,7 +20,7 @@ const SettingOffCanvas = memo((props) => {
     // Define selectors
     const themeScheme = useSelector(SettingSelector.theme_scheme)
     const themeSchemeDirection = useSelector(SettingSelector.theme_scheme_direction)
-    const themeColor = useSelector(SettingSelector.theme_color)
+
 
 
     useEffect(() => {
@@ -62,10 +60,6 @@ const SettingOffCanvas = memo((props) => {
                                 </div>
                                 <div>
                                     <ThemeScheme themeScheme={themeScheme}></ThemeScheme>
-                                   
-                                    <hr className="hr-horizontal" />
-                                    <ColorCustomizer themeColor={themeColor}></ColorCustomizer>
-                                    <hr className="hr-horizontal" />
                                 </div>
                             </div>
                         </Col>

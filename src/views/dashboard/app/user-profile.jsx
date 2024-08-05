@@ -397,7 +397,7 @@ const UserProfile = () => {
                           </span>
                         </div>
                         <h5 className="d-flex align-items-center justify-content-center gap-1 mb-2">
-                          Marvin McKinney{" "}
+                          David Arce{" "}
                           <span className="badge  bg-primary rounded-pill material-symbols-outlined font-size-14 p-0 custom-done">
                             done
                           </span>
