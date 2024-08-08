@@ -1,6 +1,8 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Row, Col, Container, Form, Button } from "react-bootstrap";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { signInWithEmailAndPassword } from "firebase/auth";
+import Swal from "sweetalert2";
 
 //swiper
 import { Swiper, SwiperSlide } from "swiper/react";
@@ -12,17 +14,71 @@ import * as SettingSelector from "../../../store/setting/selectors";
 // Redux Selector / Action
 import { useSelector } from "react-redux";
 
-//img
-// import logo from "../../../assets/images/logo-full.png";
-import login1 from "../../../assets/images/login/1.jpg";
-import login2 from "../../../assets/images/login/2.jpg";
-import login3 from "../../../assets/images/login/3.jpg";
+// Import Firebase configuration
+import { auth } from "../../../config/firebase"; // Asegúrate de que la ruta sea correcta
 
-// install Swiper modules
+// Install Swiper modules
 SwiperCore.use([Navigation, Autoplay]);
 
 const SignIn = () => {
   const appName = useSelector(SettingSelector.app_name);
+  const navigate = useNavigate();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [rememberMe, setRememberMe] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    const rememberedEmail = localStorage.getItem("rememberMeEmail");
+    const rememberedPassword = localStorage.getItem("rememberMePassword");
+    if (rememberedEmail && rememberedPassword) {
+      setEmail(rememberedEmail);
+      setPassword(rememberedPassword);
+      setRememberMe(true);
+    }
+  }, []);
+
+  const handleSignIn = async () => {
+    if (!email || !password) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Missing Fields',
+        text: 'Please fill out all fields.',
+      });
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      await signInWithEmailAndPassword(auth, email, password);
+
+      if (rememberMe) {
+        localStorage.setItem("rememberMeEmail", email);
+        localStorage.setItem("rememberMePassword", password);
+      } else {
+        localStorage.removeItem("rememberMeEmail");
+        localStorage.removeItem("rememberMePassword");
+      }
+
+      Swal.fire({
+        icon: 'success',
+        title: 'Sign In Successful',
+        text: 'Welcome back to Jammify!',
+      }).then(() => {
+        navigate("/");
+      });
+    } catch (error) {
+      Swal.fire({
+        icon: 'error',
+        title: 'Sign In Failed',
+        text: error.message,
+      });
+      console.error('Error during sign in:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <>
@@ -113,14 +169,13 @@ const SignIn = () => {
                 </p>
                 <Form className="mt-5">
                   <Form.Group className="form-group text-start">
-                    <h6 className="form-label fw-bold">
-                     Email Address
-                    </h6>
+                    <h6 className="form-label fw-bold">Email Address</h6>
                     <Form.Control
                       type="email"
                       className="form-control mb-0"
-                      placeholder="Your Full Name"
-                      defaultValue=""
+                      placeholder="Email Address"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
                     />
                   </Form.Group>
                   <Form.Group className="form-group text-start">
@@ -129,7 +184,8 @@ const SignIn = () => {
                       type="password"
                       className="form-control mb-0"
                       placeholder="Password"
-                      defaultValue=""
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
                     />
                   </Form.Group>
                   <div className="d-flex align-items-center justify-content-between">
@@ -137,6 +193,8 @@ const SignIn = () => {
                       <Form.Check.Input
                         type="checkbox"
                         className="form-check-input"
+                        checked={rememberMe}
+                        onChange={(e) => setRememberMe(e.target.checked)}
                       />
                       <h6 className="form-check-label fw-bold">Remember Me</h6>
                     </Form.Check>
@@ -144,13 +202,14 @@ const SignIn = () => {
                       Forgot Password?
                     </Link>
                   </div>
-                  {/* <Link type="button" className="btn btn-primary mt-4 fw-semibold text-uppercase w-100" to="#">sign in</Link> */}
                   <Button
                     variant="primary"
                     type="button"
                     className="btn btn-primary mt-4 fw-semibold text-uppercase w-100"
+                    onClick={handleSignIn}
+                    disabled={loading}
                   >
-                    Sign in
+                    {loading ? 'Signing In...' : 'Sign In'}
                   </Button>
                   <Button
                     variant="outline-light"

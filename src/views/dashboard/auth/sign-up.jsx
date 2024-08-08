@@ -1,28 +1,83 @@
-import React from "react";
+import React, { useState } from "react";
 import { Row, Col, Container, Form, Button } from "react-bootstrap";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { createUserWithEmailAndPassword } from "firebase/auth";
+import { collection, addDoc } from "firebase/firestore";
+import Swal from "sweetalert2";
 
 //swiper
 import { Swiper, SwiperSlide } from "swiper/react";
 import SwiperCore from "swiper";
 import { Navigation, Autoplay } from "swiper/modules";
 
-//img
-// import logo from "../../../assets/images/logo-full.png";
-import login1 from "../../../assets/images/login/1.jpg";
-import login2 from "../../../assets/images/login/2.jpg";
-import login3 from "../../../assets/images/login/3.jpg";
-
 // Import selectors & action from setting store
 import * as SettingSelector from "../../../store/setting/selectors";
 // Redux Selector / Action
 import { useSelector } from "react-redux";
 
-// install Swiper modules
+// Import Firebase configuration
+import { auth, db } from "../../../config/firebase"; // Asegúrate de que la ruta sea correcta
+
+// Install Swiper modules
 SwiperCore.use([Navigation, Autoplay]);
 
 const SignUp = () => {
   const appName = useSelector(SettingSelector.app_name);
+  const navigate = useNavigate();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [name, setName] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const handleSignUp = async () => {
+    if (!name || !email || !password) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Missing Fields',
+        text: 'Please fill out all fields.',
+      });
+      return;
+    }
+
+    if (password.length < 6) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Weak Password',
+        text: 'Password should be at least 6 characters long.',
+      });
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
+
+      await addDoc(collection(db, "users"), {
+        uid: user.uid,
+        username: name,
+        email: email,
+      });
+
+      Swal.fire({
+        icon: 'success',
+        title: 'Registration Successful',
+        text: 'Welcome to Jammify!',
+      }).then(() => {
+        navigate("/auth/sign-in");
+      });
+    } catch (error) {
+      Swal.fire({
+        icon: 'error',
+        title: 'Registration Failed',
+        text: error.message,
+      });
+      console.error('Error during sign up:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <>
@@ -119,6 +174,7 @@ const SignUp = () => {
                       className="form-control mb-0"
                       placeholder="Your Full Name"
                       defaultValue=""
+                      onChange={(e) => setName(e.target.value)}
                     />
                   </Form.Group>
                   <Form.Group className="form-group text-start">
@@ -127,6 +183,7 @@ const SignUp = () => {
                       type="email"
                       className="form-control mb-0"
                       placeholder="Email Address"
+                      onChange={(e) => setEmail(e.target.value)}
                     />
                   </Form.Group>
                   <Form.Group className="form-group text-start">
@@ -136,6 +193,7 @@ const SignUp = () => {
                       className="form-control mb-0"
                       placeholder="Password"
                       defaultValue=""
+                      onChange={(e) => setPassword(e.target.value)}
                     />
                   </Form.Group>
                   <div className="d-flex align-items-center justify-content-between">
@@ -156,8 +214,10 @@ const SignUp = () => {
                     variant="primary"
                     type="button"
                     className="btn btn-primary mt-4 fw-semibold text-uppercase w-100"
+                    onClick={handleSignUp}
+                    disabled={loading}
                   >
-                    Sign Up
+                    {loading ? 'Signing Up...' : 'Sign Up'}
                   </Button>
                   <Button
                     variant="outline-light"
