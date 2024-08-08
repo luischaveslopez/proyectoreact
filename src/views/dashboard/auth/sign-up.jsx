@@ -102,7 +102,7 @@ const SignUp = () => {
                   to="/"
                   className="d-inline-flex align-items-center justify-content-center gap-2"
                 >
-                <img src="https://i.postimg.cc/C5FqYncS/Untitled-design-3.png" width="50" alt="Jammify Logo" />
+                  <img src="https://i.postimg.cc/C5FqYncS/Untitled-design-3.png" width="50" alt="Jammify Logo" />
                   <h2 className="logo-title" data-setting="app_name">
                     Jammify
                   </h2>
@@ -115,7 +115,7 @@ const SignUp = () => {
                   <Form.Group className="form-group text-start">
                     <h6 className="form-label fw-bold">Your Full Name</h6>
                     <Form.Control
-                      type="email"
+                      type="text"
                       className="form-control mb-0"
                       placeholder="Your Full Name"
                       defaultValue=""
@@ -126,7 +126,7 @@ const SignUp = () => {
                     <Form.Control
                       type="email"
                       className="form-control mb-0"
-                      placeholder=""
+                      placeholder="Email Address"
                     />
                   </Form.Group>
                   <Form.Group className="form-group text-start">
@@ -158,6 +158,18 @@ const SignUp = () => {
                     className="btn btn-primary mt-4 fw-semibold text-uppercase w-100"
                   >
                     Sign Up
+                  </Button>
+                  <Button
+                    variant="outline-light"
+                    type="button"
+                    className="btn btn-outline-light mt-3 fw-semibold text-uppercase w-100 d-flex align-items-center justify-content-center gap-2"
+                  >
+                    <img
+                      src="https://upload.wikimedia.org/wikipedia/commons/8/84/Spotify_icon.svg"
+                      width="20"
+                      alt="Spotify Logo"
+                    />
+                    Sign up with Spotify
                   </Button>
                   <h6 className="mt-5">
                     Already Have An Account ?{" "}

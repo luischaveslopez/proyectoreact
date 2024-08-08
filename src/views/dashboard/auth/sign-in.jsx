@@ -152,6 +152,18 @@ const SignIn = () => {
                   >
                     Sign in
                   </Button>
+                  <Button
+                    variant="outline-light"
+                    type="button"
+                    className="btn btn-outline-light mt-3 fw-semibold text-uppercase w-100 d-flex align-items-center justify-content-center gap-2"
+                  >
+                    <img
+                      src="https://upload.wikimedia.org/wikipedia/commons/8/84/Spotify_icon.svg"
+                      width="20"
+                      alt="Spotify Logo"
+                    />
+                    Sign in with Spotify
+                  </Button>
                   <h6 className="mt-5">
                     Don't Have An Account ?{" "}
                     <Link to="/auth/sign-up">Sign Up</Link>
