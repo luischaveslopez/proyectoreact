@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { Row, Col, Container, Form, Button } from "react-bootstrap";
 import { Link, useNavigate } from "react-router-dom";
-import { signInWithEmailAndPassword } from "firebase/auth";
+import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from "firebase/auth";
+import { doc, setDoc } from "firebase/firestore";
 import Swal from "sweetalert2";
 
 //swiper
@@ -15,7 +16,7 @@ import * as SettingSelector from "../../../store/setting/selectors";
 import { useSelector } from "react-redux";
 
 // Import Firebase configuration
-import { auth } from "../../../config/firebase"; // Asegúrate de que la ruta sea correcta
+import { auth, db } from "../../../config/firebase"; // Asegúrate de que la ruta sea correcta
 
 // Install Swiper modules
 SwiperCore.use([Navigation, Autoplay]);
@@ -75,6 +76,90 @@ const SignIn = () => {
         text: error.message,
       });
       console.error('Error during sign in:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSpotifySignIn = () => {
+    const clientId = 'b63e75461faf4c97b7ce8202a3d81d79';
+    const redirectUri = 'http://localhost:3000/auth/sign-in'; // Mismo componente para manejar el callback
+    const scopes = [
+      'user-read-email',
+      'user-read-private',
+    ];
+
+    const spotifyAuthUrl = `https://accounts.spotify.com/authorize?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${scopes.join(
+      '%20'
+    )}&response_type=token&show_dialog=true`;
+
+    // Redirigir al usuario a la página de autorización de Spotify
+    window.location.href = spotifyAuthUrl;
+  };
+
+  useEffect(() => {
+    const hash = window.location.hash;
+    if (hash) {
+      const params = new URLSearchParams(hash.replace('#', ''));
+      const token = params.get('access_token');
+      
+      if (token) {
+        // Guardar el token en localStorage o manejarlo según sea necesario
+        localStorage.setItem('spotifyToken', token);
+        authenticateWithSpotify(token);
+      }
+    }
+  }, []);
+
+  const authenticateWithSpotify = async (token) => {
+    setLoading(true);
+    
+    try {
+      // Aquí puedes usar el token de Spotify para obtener datos del usuario
+      const response = await fetch("https://api.spotify.com/v1/me", {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+      
+      const spotifyUser = await response.json();
+
+      const email = spotifyUser.email;
+      const password = "spotifyUserGeneratedPassword"; // Debes generar una contraseña segura para los usuarios de Spotify
+
+      try {
+        // Intenta iniciar sesión si el usuario ya existe
+        await signInWithEmailAndPassword(auth, email, password);
+      } catch (error) {
+        // Si el usuario no existe, créalo
+        await createUserWithEmailAndPassword(auth, email, password);
+      }
+
+      const user = auth.currentUser;
+
+      // Guardar o actualizar los datos del usuario en Firestore
+      await setDoc(doc(db, "users", user.uid), {
+        uid: user.uid,
+        username: spotifyUser.display_name,
+        email: email,
+        spotifyId: spotifyUser.id,
+        spotifyData: spotifyUser,
+      });
+
+      Swal.fire({
+        icon: 'success',
+        title: 'Sign In Successful',
+        text: 'Welcome to Jammify!',
+      }).then(() => {
+        navigate("/");
+      });
+    } catch (error) {
+      Swal.fire({
+        icon: 'error',
+        title: 'Spotify Authentication Failed',
+        text: error.message,
+      });
+      console.error('Error during Spotify authentication:', error);
     } finally {
       setLoading(false);
     }
@@ -215,6 +300,7 @@ const SignIn = () => {
                     variant="outline-light"
                     type="button"
                     className="btn btn-outline-light mt-3 fw-semibold text-uppercase w-100 d-flex align-items-center justify-content-center gap-2"
+                    onClick={handleSpotifySignIn}
                   >
                     <img
                       src="https://upload.wikimedia.org/wikipedia/commons/8/84/Spotify_icon.svg"
