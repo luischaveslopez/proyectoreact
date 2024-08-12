@@ -30,7 +30,7 @@ const UserProfileEdit = () => {
                             
                                                 <Nav.Item as="li" className="col-md-3 p-0">
                                                     <Nav.Link eventKey="fourth" role="button">
-                                                        Manage Contact
+                                                        Social Media
                                                     </Nav.Link>
                                                 </Nav.Item>
                                             </Nav>
@@ -74,10 +74,7 @@ const UserProfileEdit = () => {
                                                             <Form.Label htmlFor="uname" className="form-label">User Name:</Form.Label>
                                                             <Form.Control type="text" className="form-control" id="uname" placeholder="Bni@01" />
                                                         </Form.Group>
-                                                        <Form.Group className="form-group col-sm-6">
-                                                            <Form.Label htmlFor="cname" className="form-label">City:</Form.Label>
-                                                            <Form.Control type="text" className="form-control" id="cname" placeholder="Atlanta" />
-                                                        </Form.Group>
+
                                                         <Form.Group className="form-group col-sm-6">
                                                             <Form.Label className="form-label d-block">Gender:</Form.Label>
                                                             <Form.Check className="form-check form-check-inline">
@@ -93,23 +90,7 @@ const UserProfileEdit = () => {
                                                             <Form.Label htmlFor="dob" className="form-label">Date Of Birth:</Form.Label>
                                                             <Form.Control className="form-control" id="dob" placeholder="1984-01-24" />
                                                         </Form.Group>
-                                                        <Form.Group className="form-group col-sm-6">
-                                                            <Form.Label className="form-label">Marital Status:</Form.Label>
-                                                            <Form.Select defaultValue="Single" className="form-select" aria-label="Default select example">
-                                                                <option>Single</option>
-                                                                <option>Married</option>
-                                                                <option>Widowed</option>
-                                                                <option>Divorced</option>
-                                                                <option>Separated </option>
-                                                            </Form.Select>
-                                                        </Form.Group>
-                                                        <Form.Group className="form-group col-sm-6">
-                                                            <Form.Label className="form-label">Age:</Form.Label>
-                                                            <Form.Select className="form-select" aria-label="Default select example 2">
-                                                                <option>46-62</option>
-                                                                <option>63 </option>
-                                                            </Form.Select>
-                                                        </Form.Group>
+
                                                         <Form.Group className="form-group col-sm-6">
                                                             <Form.Label className="form-label">Country:</Form.Label>
                                                             <Form.Select defaultValue="USA" className="form-select" aria-label="Default select example 3">
@@ -120,23 +101,11 @@ const UserProfileEdit = () => {
                                                                 <option>Africa</option>
                                                             </Form.Select>
                                                         </Form.Group>
-                                                        <Form.Group className="form-group col-sm-6">
-                                                            <Form.Label className="form-label">State:</Form.Label>
-                                                            <Form.Select defaultValue="Georgia" className="form-select" aria-label="Default select example 4">
-                                                                <option>California</option>
-                                                                <option>Florida</option>
-                                                                <option>Georgia</option>
-                                                                <option>Connecticut</option>
-                                                                <option>Louisiana</option>
-                                                            </Form.Select>
-                                                        </Form.Group>
+
                                                         <Form.Group className="form-group col-sm-12">
-                                                            <Form.Label className="form-label">Address:</Form.Label>
+                                                            <Form.Label className="form-label">About me:</Form.Label>
                                                             <textarea className="form-control" rows={5} style={{ lineHeight: "22px" }} >
-                                                                37 Cardinal Lane
-                                                                Petersburg, VA 23803
-                                                                United States of America
-                                                                Zip Code: 85001
+                                                            Hi, I’m James, I’m 36 and I work as a Digital Designer for the “Daydreams” Agency in Pier 56
                                                             </textarea>
                                                         </Form.Group>
                                                     </Row>
@@ -179,22 +148,26 @@ const UserProfileEdit = () => {
                                         <Card>
                                             <Card.Header className="d-flex justify-content-between">
                                                 <div className="header-title">
-                                                    <h4 className="card-title">Manage Contact</h4>
+                                                    <h4 className="card-title">Social Media Accounts</h4>
                                                 </div>
                                             </Card.Header>
                                             <Card.Body>
                                                 <Form>
-                                                    <Form.Group className="form-group">
-                                                        <Form.Label htmlFor="cno" className="form-label">Contact Number:</Form.Label>
-                                                        <Form.Control type="text" className="form-control" id="cno" defaultValue="001 2536 123 458" />
+                                                <Form.Group className="form-group">
+                                                        <Form.Label htmlFor="cno" className="form-label">Website link:</Form.Label>
+                                                        <Form.Control type="text" className="form-control" id="cno" defaultValue="smartinvestmentoff.com/" />
                                                     </Form.Group>
                                                     <Form.Group className="form-group">
-                                                        <Form.Label htmlFor="email" className="form-label">Email:</Form.Label>
-                                                        <Form.Control type="text" className="form-control" id="email" defaultValue="Bnijone@demo.com" />
+                                                        <Form.Label htmlFor="cno" className="form-label">TikTok profile link:</Form.Label>
+                                                        <Form.Control type="text" className="form-control" id="cno" defaultValue="https://www.tiktok.com/@thenomad.t4r" />
                                                     </Form.Group>
                                                     <Form.Group className="form-group">
-                                                        <Form.Label htmlFor="url" className="form-label">Url:</Form.Label>
-                                                        <Form.Control type="text" className="form-control" id="url" defaultValue="https://getbootstrap.com" />
+                                                        <Form.Label htmlFor="email" className="form-label">Instagram Profile Link:</Form.Label>
+                                                        <Form.Control type="text" className="form-control" id="email" defaultValue="https://www.instagram.com/edwardgonzalz/" />
+                                                    </Form.Group>
+                                                    <Form.Group className="form-group">
+                                                        <Form.Label htmlFor="url" className="form-label">Spotify Profile Link:</Form.Label>
+                                                        <Form.Control type="text" className="form-control" id="url" defaultValue="https://open.spotify.com/user/edwuardarce" />
                                                     </Form.Group>
                                                     <Button type="submit" className="btn btn-primary me-2">Submit</Button>{" "}
                                                     <button type="reset" className="btn btn-danger-subtle">Cancel</button>

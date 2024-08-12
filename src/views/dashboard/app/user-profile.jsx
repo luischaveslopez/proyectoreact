@@ -141,8 +141,8 @@ const UserProfile = () => {
       data: "Bnijohn@gmail.com",
     },
     {
-      title: "Address:",
-      data: "United States of America",
+      title: "Country:",
+      data: "USA",
     },
     {
       title: "Social Link:",
@@ -150,36 +150,15 @@ const UserProfile = () => {
     },
     {
       title: "Birth Date:",
-      data: "24 January",
-    },
-    {
-      title: "Birth Year:",
-      data: "1994",
+      data: "1984-01-24",
     },
     {
       title: "Gender:",
       data: "Female",
     },
-    {
-      title: "Interested in:",
-      data: "Designing",
-    },
-    {
-      title: "Joined:",
-      data: "April 31st, 2014",
-    },
   ]
 
-  const linkData = [
-    {
-      title: "Website:",
-      data: "www.bootstrap.com",
-    },
-    {
-      title: "Social Link:",
-      data: "www.bootstrap.com",
-    },
-  ]
+
 
   return (
     <>
@@ -2431,12 +2410,7 @@ const UserProfile = () => {
                               >
                                 <Nav.Item>
                                   <Nav.Link to="#" eventKey="about1">
-                                    Contact and Basic Info
-                                  </Nav.Link>
-                                </Nav.Item>
-                                <Nav.Item>
-                                  <Nav.Link to="#" eventKey="about2">
-                                    Hobbies and Interests
+                                    Basic Info
                                   </Nav.Link>
                                 </Nav.Item>
         
@@ -2465,77 +2439,8 @@ const UserProfile = () => {
                                       </tbody>
                                     </table>
                                   </div>
-                                  <h4 className="mt-2">
-                                    Websites and Social Links
-                                  </h4>
-                                  <hr />
-                                  <div className="table-responsive">
-                                    <table className="table profile-table">
-                                      <tbody>
-                                        {linkData.map((item, index) => {
-                                          return (
-                                            <tr key={index}>
-                                              <td><h6>{item.title}</h6></td>
-                                              <td><p className="mb-0">{item.data}</p></td>
-                                            </tr>
-                                          )
-                                        })}
-                                      </tbody>
-                                    </table>
-                                  </div>
                                 </Tab.Pane>
-                                <Tab.Pane eventKey="about2">
-                                  <h4 className="mt-2">Hobbies and Interests</h4>
-                                  <hr />
-                                  <h6 className="mb-1">Hobbies:</h6>
-                                  <p>
-                                    Hi, I’m Bni, I’m 26 and I work as a Web
-                                    Designer for the iqonicdesign.I like to ride
-                                    the bike to work, swimming, and working out. I
-                                    also like reading design magazines, go to
-                                    museums, and binge watching a good tv show
-                                    while it’s raining outside.
-                                  </p>
-                                  <h6 className="mt-2 mb-1">
-                                    Favourite TV Shows:
-                                  </h6>
-                                  <p>
-                                    Breaking Good, RedDevil, People of Interest,
-                                    The Running Dead, Found, American Guy.
-                                  </p>
-                                  <h6 className="mt-2 mb-1">Favourite Movies:</h6>
-                                  <p>
-                                    Idiocratic, The Scarred Wizard and the Fire
-                                    Crown, Crime Squad, Ferrum Man.
-                                  </p>
-                                  <h6 className="mt-2 mb-1">Favourite Games:</h6>
-                                  <p>
-                                    The First of Us, Assassin’s Squad, Dark
-                                    Assylum, NMAK16, Last Cause 4, Grand Snatch
-                                    Auto.
-                                  </p>
-                                  <h6 className="mt-2 mb-1">
-                                    Favourite Music Bands / Artists:
-                                  </h6>
-                                  <p>
-                                    Iron Maid, DC/AC, Megablow, The Ill, Kung
-                                    Fighters, System of a Revenge.
-                                  </p>
-                                  <h6 className="mt-2 mb-1">Favourite Books:</h6>
-                                  <p>
-                                    The Crime of the Century, Egiptian Mythology
-                                    101, The Scarred Wizard, Lord of the Wings,
-                                    Amongst Gods, The Oracle, A Tale of Air and
-                                    Water.
-                                  </p>
-                                  <h6 className="mt-2 mb-1">
-                                    Favourite Writers:
-                                  </h6>
-                                  <p>
-                                    Martin T. Georgeston, Jhonathan R. Token,
-                                    Ivana Rowle, Alexandria Platt, Marcus Roth.
-                                  </p>
-                                </Tab.Pane>
+
                             
                               </Tab.Content>
                             </Card.Body>
