@@ -12,7 +12,6 @@ import {
 } from "react-bootstrap";
 import Card from "../../../components/Card";
 import CreatePost from "../../../components/create-post";
-import CustomToggle from "../../../components/dropdowns";
 // import ShareOffcanvas from "../../../components/share-offcanvas";
 import { Link } from "react-router-dom";
 import ReactFsLightbox from "fslightbox-react";
@@ -24,11 +23,6 @@ import img1 from "../../../assets/images/page-img/fun.webp";
 import img3 from "../../../assets/images/icon/08.png";
 import img4 from "../../../assets/images/icon/09.png";
 import img5 from "../../../assets/images/icon/10.png";
-import img6 from "../../../assets/images/icon/11.png";
-import img7 from "../../../assets/images/icon/12.png";
-import img8 from "../../../assets/images/icon/13.png";
-import img9 from "../../../assets/images/page-img/07.jpg";
-import img10 from "../../../assets/images/page-img/06.jpg";
 import user1 from "../../../assets/images/user/1.jpg";
 import user05 from "../../../assets/images/user/05.jpg";
 import user01 from "../../../assets/images/user/01.jpg";
@@ -40,12 +34,8 @@ import user08 from "../../../assets/images/user/08.jpg";
 import user09 from "../../../assets/images/user/09.jpg";
 import user10 from "../../../assets/images/user/10.jpg";
 import user13 from "../../../assets/images/user/13.jpg";
-import user14 from "../../../assets/images/user/14.jpg";
-import user15 from "../../../assets/images/user/15.jpg";
-import user16 from "../../../assets/images/user/16.jpg";
-import user17 from "../../../assets/images/user/17.jpg";
-import user18 from "../../../assets/images/user/18.jpg";
-import user19 from "../../../assets/images/user/19.jpg";
+
+
 import img04 from "../../../assets/images/user/04.jpg";
 // import p1 from "../../../assets/images/page-img/p1.jpg";
 // import p3 from "../../../assets/images/page-img/p3.jpg";
@@ -65,7 +55,7 @@ import g6 from "../../../assets/images/page-img/g6.jpg";
 import g7 from "../../../assets/images/page-img/g7.jpg";
 import g8 from "../../../assets/images/page-img/g8.jpg";
 import g9 from "../../../assets/images/page-img/g9.jpg";
-import loader from "../../../assets/images/page-img/page-load-loader.gif";
+
 import img51 from "../../../assets/images/page-img/51.jpg";
 import img52 from "../../../assets/images/page-img/52.jpg";
 import img53 from "../../../assets/images/page-img/53.jpg";
@@ -89,9 +79,7 @@ import busImg from "../../../assets/images/page-img/bus.webp";
 import boyImg from "../../../assets/images/page-img/boy.webp";
 import img11 from "../../../assets/images/page-img/fd.webp";
 
-import coin from "../../../assets/images/gamipress/coin.svg";
-import credit from "../../../assets/images/gamipress/credit.svg";
-import gems from "../../../assets/images/gamipress/gems.svg";
+
 import ShareOffcanvasNew from "../../../components/ShareOffcanvasNew";
 // Fslightbox plugin
 const FsLightbox = ReactFsLightbox.default

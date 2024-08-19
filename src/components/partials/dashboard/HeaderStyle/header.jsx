@@ -1,33 +1,52 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Nav, Form, Card, Container, Image, Dropdown, Navbar } from "react-bootstrap";
 import { Link } from "react-router-dom";
+import { getAuth } from "firebase/auth";
+import { doc, getDoc } from "firebase/firestore";
 
-//image
-import user1 from "../../../../assets/images/user/1.jpg";
+// Import default user image
+import defaultUserImage from "../../../../assets/images/user/1.jpg";
 import user3 from "../../../../assets/images/user/03.jpg";
-
 
 // Import selectors & action from setting store
 import * as SettingSelector from "../../../../store/setting/selectors";
 
 // Redux Selector / Action
 import { useSelector } from "react-redux";
+import { db } from "../../../../config/firebase";
 import SearchModal from "../../../search-modal";
 
 const Header = () => {
   const appName = useSelector(SettingSelector.app_name);
-
   const [active, setActive] = useState("home");
+  const [userData, setUserData] = useState(null);
 
   const minisidebar = () => {
     const sidebarMini = document.getElementsByTagName("ASIDE")[0];
     if (sidebarMini.classList.contains('sidebar-mini')) {
       sidebarMini.classList.remove('sidebar-mini')
-    }
-    else {
+    } else {
       sidebarMini.classList.add('sidebar-mini')
     }
   };
+
+  useEffect(() => {
+    const fetchUserData = async () => {
+      const auth = getAuth();
+      const user = auth.currentUser;
+
+      if (user) {
+        const userDoc = await getDoc(doc(db, "users", user.uid));
+        if (userDoc.exists()) {
+          setUserData(userDoc.data());
+        } else {
+          console.log("No such document!");
+        }
+      }
+    };
+
+    fetchUserData();
+  }, []);
 
   const dropdownContent = document.querySelectorAll(".sub-drop");
   if (dropdownContent) {
@@ -40,14 +59,12 @@ const Header = () => {
 
   return (
     <>
-      {/* <div className="position-relative"> */}
       <div className="iq-top-navbar border-bottom">
         <Navbar
           expand="lg"
           variant="light"
           className="nav navbar navbar-expand-lg navbar-light iq-navbar p-lg-0"
         >
-          {/* <Navbar className="iq-navbar p-lg-0" sticky="top"> */}
           <Container fluid className="navbar-inner">
             <div className="d-flex align-items-center pb-2 pb-lg-0 d-xl-none">
               <Link
@@ -106,7 +123,6 @@ const Header = () => {
                           <span className="nav-text">Home</span>
                         </Link>
                       </li>
-                     
                     </ul>
                   </div>
                 </div>
@@ -141,7 +157,6 @@ const Header = () => {
             </div>
 
             <ul className="navbar-nav navbar-list">
-
               <Dropdown as="li" className="nav-item">
                 <Dropdown.Toggle as="a"
                   className="search-toggle d-flex align-items-center"
@@ -157,7 +172,7 @@ const Header = () => {
                   aria-labelledby="notification-drop"
                   data-bs-popper="static"
                 >
-                  <Card className=" m-0 shadow">
+                  <Card className="m-0 shadow">
                     <div className="card-header d-flex justify-content-between px-0 pb-4 mx-5 border-bottom">
                       <div className="header-title">
                         <h5 className="fw-semibold">Notifications</h5>
@@ -165,7 +180,7 @@ const Header = () => {
                       <h6 className="material-symbols-outlined">settings</h6>
                     </div>
                     <Card.Body>
-                    <div className="item-header-scroll">
+                      <div className="item-header-scroll">
                         <Link to="#">
                           <div className="d-flex gap-3 mb-4">
                             <img
@@ -203,31 +218,23 @@ const Header = () => {
                 </Dropdown.Menu>
               </Dropdown>
 
-              <Nav.Item className="nav-item d-none d-lg-none">
-                <Link
-                  to="#"
-                  className="dropdown-toggle d-flex align-items-center"
-                  id="mail-drop-1"
-                  data-bs-toggle="dropdown"
-                  aria-haspopup="true"
-                  aria-expanded="false"
-                >
-                  <i className="material-symbols-outlined">mail</i>
-                  <span className="mobile-text  ms-3">Message</span>
-                </Link>
-              </Nav.Item>
               <Dropdown as="li" className="nav-item user-dropdown">
                 <Dropdown.Toggle as="a"
                   to="#"
                   className="d-flex align-items-center"
                   id="drop-down-arrow"
                 >
-                  <Image
-                    src={user1}
-                    className="img-fluid rounded-circle avatar-48 border border-2 me-3"
-                    alt="user"
-                    loading="lazy"
-                  />
+                  <div className="user-avatar-container me-3">
+                    <Image
+                      src={userData?.profilePic || defaultUserImage}
+                      className="img-fluid"
+                      alt="user"
+                      loading="lazy"
+                    />
+                  </div>
+                  <span className="d-none d-lg-block">
+                    {userData?.username || 'User'}
+                  </span>
                 </Dropdown.Toggle>
                 <Dropdown.Menu
                   className={`sub-drop caption-menu `}
@@ -235,10 +242,10 @@ const Header = () => {
                   <Card className="shadow-none m-0">
                     <Card.Header>
                       <div className="header-title">
-                        <h5 className="mb-0 ">Hello User</h5>
+                        <h5 className="mb-0">Hello {userData?.username || 'User'}</h5>
                       </div>
                     </Card.Header>
-                    <Card.Body className="p-0 ">
+                    <Card.Body className="p-0">
                       <div className="d-flex align-items-center iq-sub-card border-0">
                         <span className="material-symbols-outlined">
                           line_style
@@ -272,7 +279,7 @@ const Header = () => {
                           </Link>
                         </div>
                       </div>
-                      <div className=" iq-sub-card">
+                      <div className="iq-sub-card">
                         <h5>Chat Settings</h5>
                       </div>
                       <div className="d-flex align-items-center iq-sub-card border-0">
@@ -305,15 +312,27 @@ const Header = () => {
               </Dropdown>
             </ul>
           </Container>
-          {/* </Navbar> */}
         </Navbar>
-      </div >
-      {/* </div> */}
+      </div>
 
-      {/* <div
-        className={`modal-backdrop fade ${show ? "show" : "d-none"}`}
-        onClick={handleClose}
-      ></div> */}
+      <style jsx>{`
+        .user-avatar-container {
+          width: 48px;
+          height: 48px;
+          border-radius: 50%;
+          overflow: hidden;
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          border: 2px solid #fff; /* Optional: add a border for better visibility */
+        }
+
+        .user-avatar-container img {
+          width: 100%;
+          height: 100%;
+          object-fit: cover; /* Ensures the image covers the container without distortion */
+        }
+      `}</style>
     </>
   );
 };

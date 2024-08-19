@@ -16,7 +16,7 @@ import * as SettingSelector from "../../../store/setting/selectors";
 import { useSelector } from "react-redux";
 
 // Import Firebase configuration
-import { auth, db } from "../../../config/firebase"; // Asegúrate de que la ruta sea correcta
+import { auth, db } from "../../../config/firebase";
 
 // Install Swiper modules
 SwiperCore.use([Navigation, Autoplay]);
@@ -38,6 +38,17 @@ const SignIn = () => {
       setRememberMe(true);
     }
   }, []);
+
+  const saveUserDataToFirestore = async (user, additionalData = {}) => {
+    const userData = {
+      uid: user.uid,
+      email: user.email,
+      username: additionalData.username || user.displayName,
+      ...additionalData, // Datos adicionales que pueden venir de Spotify
+    };
+
+    await setDoc(doc(db, "users", user.uid), userData, { merge: true }); // Usar merge para combinar datos
+  };
 
   const handleSignIn = async () => {
     if (!email || !password) {
@@ -104,7 +115,6 @@ const SignIn = () => {
       const token = params.get('access_token');
       
       if (token) {
-        // Guardar el token en localStorage o manejarlo según sea necesario
         localStorage.setItem('spotifyToken', token);
         authenticateWithSpotify(token);
       }
@@ -118,32 +128,31 @@ const SignIn = () => {
       // Aquí puedes usar el token de Spotify para obtener datos del usuario
       const response = await fetch("https://api.spotify.com/v1/me", {
         headers: {
-          Authorization: `Bearer ${token}`
-        }
+          Authorization: `Bearer ${token}`,
+        },
       });
       
       const spotifyUser = await response.json();
-
       const email = spotifyUser.email;
       const password = "spotifyUserGeneratedPassword"; // Debes generar una contraseña segura para los usuarios de Spotify
 
+      let user;
+
       try {
         // Intenta iniciar sesión si el usuario ya existe
-        await signInWithEmailAndPassword(auth, email, password);
+        const userCredential = await signInWithEmailAndPassword(auth, email, password);
+        user = userCredential.user;
       } catch (error) {
         // Si el usuario no existe, créalo
-        await createUserWithEmailAndPassword(auth, email, password);
+        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        user = userCredential.user;
       }
 
-      const user = auth.currentUser;
-
       // Guardar o actualizar los datos del usuario en Firestore
-      await setDoc(doc(db, "users", user.uid), {
-        uid: user.uid,
-        username: spotifyUser.display_name,
-        email: email,
+      await saveUserDataToFirestore(user, {
         spotifyId: spotifyUser.id,
         spotifyData: spotifyUser,
+        username: spotifyUser.display_name,
       });
 
       Swal.fire({

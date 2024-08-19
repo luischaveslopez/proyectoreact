@@ -18,7 +18,7 @@ const UserProfileEdit = () => {
         dob: '',
         country: '',
         aboutMe: '',
-        profilePic: '',
+        profilePic: img1,
         websiteLink: '',
         tiktokLink: '',
         instagramLink: '',
@@ -51,25 +51,25 @@ const UserProfileEdit = () => {
                         const data = userDoc.data();
                         setUserData(prevState => ({
                             ...prevState,
-                            firstName: data.firstName || prevState.firstName,
-                            lastName: data.lastName || prevState.lastName,
-                            username: data.username || user.displayName || prevState.username,
-                            gender: data.gender || prevState.gender,
-                            dob: data.dob || prevState.dob,
-                            country: data.country || prevState.country,
-                            aboutMe: data.aboutMe || prevState.aboutMe,
-                            profilePic: data.profilePic || user.photoURL || prevState.profilePic || img1,
-                            websiteLink: data.websiteLink || prevState.websiteLink,
-                            tiktokLink: data.tiktokLink || prevState.tiktokLink,
-                            instagramLink: data.instagramLink || prevState.instagramLink,
-                            spotifyLink: data.spotifyLink || prevState.spotifyLink
+                            firstName: data.firstName || '',
+                            lastName: data.lastName || '',
+                            username: data.username || user.displayName || '',
+                            gender: data.gender || '',
+                            dob: data.dob || '',
+                            country: data.country || '',
+                            aboutMe: data.aboutMe || '',
+                            profilePic: data.profilePic || user.photoURL || img1,
+                            websiteLink: data.websiteLink || '',
+                            tiktokLink: data.tiktokLink || '',
+                            instagramLink: data.instagramLink || '',
+                            spotifyLink: data.spotifyLink || ''
                         }));
                     } else {
-                        // Si no se encuentran datos del usuario, solo se inicializan con los datos del usuario
+                        // Manejo de usuarios nuevos o sin datos previos
                         setUserData(prevState => ({
                             ...prevState,
-                            username: user.displayName || prevState.username,
-                            profilePic: user.photoURL || prevState.profilePic || img1
+                            username: user.displayName || '',
+                            profilePic: user.photoURL || img1
                         }));
                     }
                 } catch (error) {
@@ -132,7 +132,8 @@ const UserProfileEdit = () => {
                     ...userData,
                     profilePic: profilePicURL,
                     uid: user.uid,
-                });
+                }, { merge: true }); // <- Aquí es donde se realiza la fusión de datos
+
                 alert("Profile updated successfully!");
             } catch (error) {
                 console.error("Error updating profile: ", error);
@@ -224,16 +225,16 @@ const UserProfileEdit = () => {
                                                                     src={userData.profilePic || img1} 
                                                                     alt="profile-pic" 
                                                                     style={{
-                                                                        width: '150px', // Ajustar al tamaño del contenedor
-                                                                        height: '150px', // Ajustar al tamaño del contenedor
-                                                                        objectFit: 'cover', // Mantener la proporción de la imagen
-                                                                        borderRadius: '50%' // Hacer la imagen circular si es necesario
+                                                                        width: '150px',
+                                                                        height: '150px',
+                                                                        objectFit: 'cover',
+                                                                        borderRadius: '50%'
                                                                     }} 
                                                                 />
                                                                 <div className="p-image d-flex align-items-center justify-content-center">
                                                                     <span 
                                                                         className="material-symbols-outlined"
-                                                                        onClick={() => fileInputRef.current.click()} // Abrir el selector de archivos al hacer clic
+                                                                        onClick={() => fileInputRef.current.click()}
                                                                     >
                                                                         edit
                                                                     </span>
@@ -241,9 +242,9 @@ const UserProfileEdit = () => {
                                                                         className="file-upload"
                                                                         type="file"
                                                                         accept="image/*"
-                                                                        ref={fileInputRef} // Asignar el ref al input
+                                                                        ref={fileInputRef}
                                                                         onChange={handleImageChange}
-                                                                        style={{ display: 'none' }} // Ocultar el input
+                                                                        style={{ display: 'none' }}
                                                                     />
                                                                 </div>
                                                             </div>
