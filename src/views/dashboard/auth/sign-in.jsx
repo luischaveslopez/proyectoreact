@@ -4,21 +4,13 @@ import { Link, useNavigate } from "react-router-dom";
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from "firebase/auth";
 import { doc, setDoc } from "firebase/firestore";
 import Swal from "sweetalert2";
-
-//swiper
 import { Swiper, SwiperSlide } from "swiper/react";
 import SwiperCore from "swiper";
 import { Navigation, Autoplay } from "swiper/modules";
-
-// Import selectors & action from setting store
 import * as SettingSelector from "../../../store/setting/selectors";
-// Redux Selector / Action
 import { useSelector } from "react-redux";
-
-// Import Firebase configuration
 import { auth, db } from "../../../config/firebase";
 
-// Install Swiper modules
 SwiperCore.use([Navigation, Autoplay]);
 
 const SignIn = () => {
@@ -94,14 +86,18 @@ const SignIn = () => {
 
   const handleSpotifySignIn = () => {
     const clientId = 'b63e75461faf4c97b7ce8202a3d81d79';
-    const redirectUri = 'http://localhost:3000/auth/sign-in'; // Mismo componente para manejar el callback
+    const redirectUri = 'http://localhost:3000/auth/sign-in';
     const scopes = [
       'user-read-email',
       'user-read-private',
+      'user-library-read', // Permite leer las canciones guardadas
+      'user-top-read', // Permite leer los artistas principales
+      'playlist-read-private', // Permite leer las playlists privadas
+      'playlist-read-collaborative' // Permite leer playlists colaborativas
     ];
 
     const spotifyAuthUrl = `https://accounts.spotify.com/authorize?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${scopes.join(
-      '%20'
+      "%20"
     )}&response_type=token&show_dialog=true`;
 
     // Redirigir al usuario a la página de autorización de Spotify
@@ -125,7 +121,6 @@ const SignIn = () => {
     setLoading(true);
     
     try {
-      // Aquí puedes usar el token de Spotify para obtener datos del usuario
       const response = await fetch("https://api.spotify.com/v1/me", {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -133,8 +128,13 @@ const SignIn = () => {
       });
       
       const spotifyUser = await response.json();
+
+      if (!spotifyUser.email) {
+        throw new Error("Spotify did not provide an email address. Please ensure the required permissions are granted.");
+      }
+
       const email = spotifyUser.email;
-      const password = "spotifyUserGeneratedPassword"; // Debes generar una contraseña segura para los usuarios de Spotify
+      const password = "spotifyUserGeneratedPassword"; // Debes generar una contraseña segura para usuarios de Spotify
 
       let user;
 
@@ -153,6 +153,9 @@ const SignIn = () => {
         spotifyId: spotifyUser.id,
         spotifyData: spotifyUser,
         username: spotifyUser.display_name,
+        country: spotifyUser.country,
+        followers: spotifyUser.followers.total,
+        product: spotifyUser.product,
       });
 
       Swal.fire({
@@ -163,12 +166,12 @@ const SignIn = () => {
         navigate("/");
       });
     } catch (error) {
+      console.error('Error during Spotify authentication:', error);
       Swal.fire({
         icon: 'error',
         title: 'Spotify Authentication Failed',
         text: error.message,
       });
-      console.error('Error during Spotify authentication:', error);
     } finally {
       setLoading(false);
     }
