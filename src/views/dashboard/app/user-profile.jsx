@@ -228,9 +228,11 @@ const UserProfile = () => {
                             <li className="text-center pe-3">
                               <Link to="#">
                                 <img
-                                  src={img3}
+                                  src="https://img.icons8.com/?size=100&id=fdfLpA6fsXN2&format=png&color=000000"
                                   className="img-fluid rounded"
-                                  alt="facebook"
+                                  alt="tiktok"
+                                  width={32}
+                                  height={32}
                                   loading="lazy"
                                 />
                               </Link>
@@ -238,9 +240,11 @@ const UserProfile = () => {
                             <li className="text-center pe-3">
                               <Link to="#">
                                 <img
-                                  src={img4}
+                                  src="https://img.icons8.com/?size=100&id=G9XXzb9XaEKX&format=png&color=000000"
+                                  width={32}
+                                  height={32}
                                   className="img-fluid rounded"
-                                  alt="Tiktok"
+                                  alt="Spotify"
                                   loading="lazy"
                                 />
                               </Link>
@@ -248,7 +252,9 @@ const UserProfile = () => {
                             <li className="text-center pe-3">
                               <Link to="#">
                                 <img
-                                  src={img5}
+                                  src="https://img.icons8.com/?size=100&id=BrU2BBoRXiWq&format=png&color=000000"
+                                  width={32}
+                                  height={32}
                                   className="img-fluid rounded"
                                   alt="Instagram"
                                   loading="lazy"
