@@ -10,6 +10,9 @@ import {
   Tooltip,
   Collapse,
 } from "react-bootstrap";
+import { getAuth } from "firebase/auth";
+import { doc, getDoc } from "firebase/firestore"; // Importar las funciones correctamente
+import { db } from '../../../config/firebase'; // Asegúrate de que la ruta sea correcta
 import Card from "../../../components/Card";
 import CreatePost from "../../../components/create-post";
 // import ShareOffcanvas from "../../../components/share-offcanvas";
@@ -91,6 +94,7 @@ const UserProfile = () => {
   const [open1, setOpen1] = useState(false);
   const [open2, setOpen2] = useState(false);
   const [open3, setOpen3] = useState(false);
+  
 
   const [modalShow, setModalShow] = useState(false);
   const [modalShow1, setModalShow1] = useState(false);
@@ -120,34 +124,85 @@ const UserProfile = () => {
     });
   }
 
-  const aboutData = [
-    {
-      title: 'About Me:', data: 'Hi, I’m James, I’m 36 and I work as a Digital Designer for the “Daydreams” Agency in Pier 56'
-    },
-    {
-      title: "Email:",
-      data: "Bnijohn@gmail.com",
-    },
-    {
-      title: "Country:",
-      data: "USA",
-    },
-    {
-      title: "Social Link:",
-      data: "www.bootstrap.com",
-    },
-    {
-      title: "Birth Date:",
-      data: "1984-01-24",
-    },
-    {
-      title: "Gender:",
-      data: "Female",
-    },
-  ]
+
+  const [userName, setUserName] = useState(''); // Estado para el nombre del usuario
+  const [userCountry, setUserCountry] = useState(''); // Estado para el país del usuario
+  const [userWebsite, setUserWebsite] = useState(''); // Estado para el link de la página web
+  const [tiktokLink, setTiktokLink] = useState('');
+  const [spotifyLink, setSpotifyLink] = useState('');
+  const [instagramLink, setInstagramLink] = useState('');
+  const [profilePic, setProfilePic] = useState(user1); // Estado para la foto de perfil con imagen por defecto
+  const [aboutData, setAboutData] = useState([]); // Estado para los datos de "about"
 
 
+  const auth = getAuth();
+  const user = auth.currentUser;
 
+  useEffect(() => {
+    const fetchUserData = async () => {
+      if (user) {
+        try {
+          const userDoc = await getDoc(doc(db, 'users', user.uid));
+          if (userDoc.exists()) {
+            const data = userDoc.data();
+            setUserName(data.firstName || user.displayName || 'User');
+            setUserCountry(data.country || 'No country available');
+            setUserWebsite(data.websiteLink || '');
+            setTiktokLink(data.tiktokLink || '');
+            setSpotifyLink(data.spotifyLink || '');
+            setInstagramLink(data.instagramLink || '');
+            setProfilePic(data.profilePic || user1);
+            
+            // Actualizar el estado de aboutData
+            const newAboutData = [
+              { title: 'About Me:', data: data.aboutMe || 'No data yet' },
+              { title: "Email:", data: data.email || 'No data yet' },
+              { title: "Country:", data: data.country || 'No data yet' },
+              { title: "Birth Date:", data: data.dob || 'No data yet' },
+              { title: "Gender:", data: data.gender || 'No data yet' }
+            ];
+            setAboutData(newAboutData);
+          } else {
+            // Usuario nuevo o sin datos
+            setUserName(user.displayName || 'User');
+            setUserCountry('No country available');
+            setUserWebsite('');
+            setTiktokLink('');
+            setSpotifyLink('');
+            setInstagramLink('');
+            setProfilePic(user1);
+
+            // Actualizar aboutData para mostrar "No data yet"
+            const newAboutData = [
+              { title: 'About Me:', data: 'No data yet' },
+              { title: "Email:", data: user.email || 'No data yet' },
+              { title: "Country:", data: 'No country available' },
+              { title: "Birth Date:", data: 'No data yet' },
+              { title: "Gender:", data: 'No data yet' }
+            ];
+            setAboutData(newAboutData);
+          }
+        } catch (error) {
+          console.error("Error fetching user data: ", error);
+          setProfilePic(user1);
+
+          // Mostrar un error en aboutData
+          const newAboutData = [
+            { title: 'About Me:', data: 'Error loading data' },
+            { title: "Email:", data: user.email || 'No data yet' },
+            { title: "Country:", data: 'Error loading data' },
+            { title: "Birth Date:", data: 'Error loading data' },
+            { title: "Gender:", data: 'Error loading data' }
+          ];
+          setAboutData(newAboutData);
+        }
+      }
+    };
+
+    fetchUserData();
+  }, [user]);
+  
+  
   return (
     <>
       <div id="content-page" className="content-inner">
@@ -209,7 +264,7 @@ const UserProfile = () => {
           <div
             className="header-cover-img"
             style={{
-              backgroundImage: `url(${pageBgImg})`,
+              backgroundImage: `url(${"https://i.imgur.com/0LORAZB.png"})`,
               backgroundSize: "cover",
               backgroundRepeat: "no-repeat",
             }}
@@ -225,63 +280,79 @@ const UserProfile = () => {
                       <Col lg={4} className="profile-left">
                         <div className="social-links">
                           <ul className="social-data-block d-flex align-items-center justify-content-center list-inline p-0 m-0">
-                            <li className="text-center pe-3">
-                              <Link to="#">
-                                <img
-                                  src="https://img.icons8.com/?size=100&id=fdfLpA6fsXN2&format=png&color=000000"
-                                  className="img-fluid rounded"
-                                  alt="tiktok"
-                                  width={32}
-                                  height={32}
-                                  loading="lazy"
-                                />
-                              </Link>
-                            </li>
-                            <li className="text-center pe-3">
-                              <Link to="#">
-                                <img
-                                  src="https://img.icons8.com/?size=100&id=G9XXzb9XaEKX&format=png&color=000000"
-                                  width={32}
-                                  height={32}
-                                  className="img-fluid rounded"
-                                  alt="Spotify"
-                                  loading="lazy"
-                                />
-                              </Link>
-                            </li>
-                            <li className="text-center pe-3">
-                              <Link to="#">
-                                <img
-                                  src="https://img.icons8.com/?size=100&id=BrU2BBoRXiWq&format=png&color=000000"
-                                  width={32}
-                                  height={32}
-                                  className="img-fluid rounded"
-                                  alt="Instagram"
-                                  loading="lazy"
-                                />
-                              </Link>
-                            </li>
+                          <li className="text-center pe-3">
+                            <Link
+                              to={tiktokLink || "#"} // Redirige al enlace de TikTok o a "#" si no hay enlace
+                              target={tiktokLink ? "_blank" : "_self"} // Solo abre en nueva pestaña si hay enlace
+                              rel="noopener noreferrer"
+                              onClick={() => {
+                                if (!tiktokLink) alert("No TikTok link available");
+                              }}
+                            >
+                              <img
+                                src="https://img.icons8.com/?size=100&id=fdfLpA6fsXN2&format=png&color=000000"
+                                className="img-fluid rounded"
+                                alt="tiktok"
+                                width={32}
+                                height={32}
+                                loading="lazy"
+                              />
+                            </Link>
+                          </li>
+                          <li className="text-center pe-3">
+                            <Link
+                              to={spotifyLink || "#"}
+                              target={spotifyLink ? "_blank" : "_self"}
+                              rel="noopener noreferrer"
+                              onClick={() => {
+                                if (!spotifyLink) alert("No Spotify link available");
+                              }}
+                            >
+                              <img
+                                src="https://img.icons8.com/?size=100&id=G9XXzb9XaEKX&format=png&color=000000"
+                                width={32}
+                                height={32}
+                                className="img-fluid rounded"
+                                alt="Spotify"
+                                loading="lazy"
+                              />
+                            </Link>
+                          </li>
+                          <li className="text-center pe-3">
+                            <Link
+                              to={instagramLink || "#"}
+                              target={instagramLink ? "_blank" : "_self"}
+                              rel="noopener noreferrer"
+                              onClick={() => {
+                                if (!instagramLink) alert("No Instagram link available");
+                              }}
+                            >
+                              <img
+                                src="https://img.icons8.com/?size=100&id=BrU2BBoRXiWq&format=png&color=000000"
+                                width={32}
+                                height={32}
+                                className="img-fluid rounded"
+                                alt="Instagram"
+                                loading="lazy"
+                              />
+                            </Link>
+                          </li>
                           </ul>
                         </div>
                       </Col>
                       <Col lg={4} className="text-center profile-center">
                         <div className="header-avatar position-relative d-inline-block">
-                          <span className="change-profile-image bg-primary rounded-pill">
-                            <span className="material-symbols-outlined text-white font-size-16">
-                              photo_camera
-                            </span>
-                          </span>
-                          <img
-                            src={user1}
-                            alt="user"
-                            className="avatar-150 border border-4 border-white rounded-3"
-                          />
+                        <img
+                          src={profilePic} // Usar la URL de la foto de perfil o la imagen por defecto
+                          alt="user"
+                          className="avatar-150 border border-4 border-white rounded-3"
+                        />
                           <span className="badge bg-success fw-500 letter-spacing-1 chat-status">
                             online
                           </span>
                         </div>
                         <h5 className="d-flex align-items-center justify-content-center gap-1 mb-2">
-                          David Arce{" "}
+                        {userName}{" "}
                           <span className="badge  bg-primary rounded-pill material-symbols-outlined font-size-14 p-0 custom-done">
                             done
                           </span>
@@ -292,7 +363,7 @@ const UserProfile = () => {
                               location_on
                             </h6>
                             <span className="font-size-14 text-uppercase fw-500">
-                              lyON
+                              {userCountry}
                             </span>
                           </li>
                           <li className="d-flex align-items-center gap-1">
@@ -300,10 +371,12 @@ const UserProfile = () => {
                               globe_asia
                             </h6>
                             <Link
-                              to="https://smartinvestmentoff.com/"
+                              to={userWebsite ? userWebsite : "#"} // Si no hay link, usa "#" como placeholder
                               className="font-size-14 fw-500 text-body"
+                              target={userWebsite ? "_blank" : "_self"} // Abre en una nueva pestaña si hay link
+                              rel="noopener noreferrer"
                             >
-                              smartinvestmentoff.com/
+                              {userWebsite ? userWebsite : "No website link available"}
                             </Link>
                           </li>
                         </ul>
