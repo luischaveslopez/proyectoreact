@@ -6,8 +6,6 @@ import { Link } from "react-router-dom";
 //react bootstrap
 import { Dropdown, Button, Modal } from "react-bootstrap";
 
-//components
-import CustomToggle from "./dropdowns";
 
 //images
 import user1 from "../assets/images/user/1.jpg";
