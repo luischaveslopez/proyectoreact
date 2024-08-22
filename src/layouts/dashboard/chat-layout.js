@@ -5,8 +5,6 @@ import {Container, Tab} from 'react-bootstrap'
 import { Outlet } from 'react-router-dom'
 
 
-// import ChatRouter from '../../router/chat-router'
-
 const ChatLayout = () => {
   return (
       <>
