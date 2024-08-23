@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Col, Dropdown, Collapse, Modal, Button, Form } from "react-bootstrap";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { getAuth } from "firebase/auth";
 import { doc, updateDoc, deleteDoc, getDoc, Timestamp } from "firebase/firestore";
 import { db } from "../config/firebase"; 
@@ -40,6 +40,7 @@ const Post = ({
 
   const auth = getAuth();
   const currentUser = auth.currentUser;
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchPostData = async () => {
@@ -268,6 +269,10 @@ const Post = ({
     }
   };
 
+  const handleUserClick = () => {
+    navigate(`/dashboard/app/friend-profile/${encodeURIComponent(user.username)}`);
+  };
+
   return (
     <>
       <Col sm={12} className="special-post" onClick={() => onPostClick(postId)}>
@@ -280,7 +285,8 @@ const Post = ({
                     className="border border-2 rounded-circle user-post-profile"
                     src={user?.profilePic || "defaultUserImage"}
                     alt={user?.username || "User"}
-                    style={{ width: "50px", height: "50px" }} 
+                    style={{ width: "50px", height: "50px", cursor: "pointer" }}
+                    onClick={handleUserClick}
                   />
                 </div>
                 <div className="w-100">
