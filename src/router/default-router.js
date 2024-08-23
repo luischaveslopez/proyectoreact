@@ -34,7 +34,7 @@ export const DefaultRouter = [
     element: <UserProfile />,
   },
   {
-    path: "dashboard/app/friend-profile",
+    path: "dashboard/app/friend-profile/:username", // Aquí se añade el parámetro :username
     element: <FriendProfile />,
   },
   {

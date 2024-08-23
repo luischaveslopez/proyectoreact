@@ -1,24 +1,25 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Row, Col, Container, Dropdown } from "react-bootstrap";
+import { collection, query, where, getDocs } from "firebase/firestore";
+import { db } from '../../../config/firebase';
 import Card from "../../../components/Card";
 
 import CreatePostNew from "../../../components/create-post-new";
 
 import CustomToggle from "../../../components/dropdowns";
-import { Link } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import ReactFsLightbox from "fslightbox-react";
 import ShareOffcanvas from "../../../components/share-offcanvas";
 
+// images
+import img1 from "../../../assets/images/page-img/fun.webp";
 // images
 import user1 from "../../../assets/images/user/11.png";
 import user05 from "../../../assets/images/user/05.jpg";
 import user02 from "../../../assets/images/user/02.jpg";
 import user03 from "../../../assets/images/user/03.jpg";
-import user06 from "../../../assets/images/user/06.jpg";
-import user07 from "../../../assets/images/user/07.jpg";
 import user08 from "../../../assets/images/user/08.jpg";
 import user09 from "../../../assets/images/user/09.jpg";
-import user10 from "../../../assets/images/user/10.jpg";
 import user11 from "../../../assets/images/user/1.jpg";
 import icon1 from "../../../assets/images/icon/01.png";
 import icon2 from "../../../assets/images/icon/02.png";
@@ -47,10 +48,45 @@ const FsLightbox = ReactFsLightbox.default
   : ReactFsLightbox;
 
 const FriendProfile = () => {
+  const { username } = useParams(); // Obtiene el username desde la URL
+  const [userData, setUserData] = useState(null);
+  const [loading, setLoading] = useState(true);
   const [imageController, setImageController] = useState({
     toggler: false,
     slide: 1,
   });
+
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        // Crear una consulta para obtener el documento donde el campo "username" coincide
+        const q = query(collection(db, "users"), where("username", "==", username));
+        const querySnapshot = await getDocs(q);
+
+        if (!querySnapshot.empty) {
+          // Tomamos el primer documento que coincida
+          const doc = querySnapshot.docs[0];
+          setUserData(doc.data());
+        } else {
+          console.error("No user found with the username:", username);
+        }
+      } catch (error) {
+        console.error("Error fetching user data: ", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchUserData();
+  }, [username]);
+
+  if (loading) {
+    return <div>Loading...</div>; // Muestra un indicador de carga mientras se obtienen los datos
+  }
+
+  if (!userData) {
+    return <div>No user found</div>; // Muestra un mensaje si no se encontró el usuario
+  }
 
   function imageOnSlide(number) {
     setImageController({
@@ -71,63 +107,62 @@ const FriendProfile = () => {
           <Row>
             <Col sm={12}>
               <Card>
-                <Card.Body className=" profile-page p-0">
+                <Card.Body className="profile-page p-0">
                   <div className="profile-header profile-info">
-                  <Container className="position-relative p-0">
-                    <div
-                      className="header-cover-img"
-                      style={{
-                        backgroundImage: `url(${"https://i.imgur.com/0LORAZB.png"})`,
-                        backgroundSize: "cover",
-                        backgroundRepeat: "no-repeat",
-                      }}
-                    >
-                      <ul className="header-nav d-flex flex-wrap justify-end p-0 m-0">
-                        <li>
-                          <Link to="#" className="material-symbols-outlined">
-                            personadd
-                          </Link>
-                        </li>
-                        <li>
-                          <Link to="#" className="material-symbols-outlined">
-                            mail
-                          </Link>
-                        </li>
-                      </ul> 
-                    </div>
-                  </Container>
+                    <Container className="position-relative p-0">
+                      <div
+                        className="header-cover-img"
+                        style={{
+                          backgroundImage: `url(${"https://i.imgur.com/0LORAZB.png" || img1})`,
+                          backgroundSize: "cover",
+                          backgroundRepeat: "no-repeat",
+                        }}
+                      >
+                        <ul className="header-nav d-flex flex-wrap justify-end p-0 m-0">
+                          <li>
+                            <Link to="#" className="material-symbols-outlined">
+                              personadd
+                            </Link>
+                          </li>
+                          <li>
+                            <Link to="#" className="material-symbols-outlined">
+                              mail
+                            </Link>
+                          </li>
+                        </ul> 
+                      </div>
+                    </Container>
                     <div className="user-detail text-center mb-3">
                       <div className="profile-img">
                         <img
                           loading="lazy"
-                          src={user1}
+                          src={userData.profilePic || user1}
                           alt="profile-img"
                           className="avatar-130 img-fluid"
                         />
                       </div>
                       <div className="profile-detail">
-                        <h3>Paul Molive</h3>
+                        <h3>{userData.username || "User Name"}</h3>
                       </div>
                     </div>
                     <div className="profile-info py-5 px-md-5 px-3 d-flex align-items-center justify-content-between position-relative">
                       <div className="social-links">
                         <ul className="social-data-block d-flex align-items-center justify-content-between list-inline p-0 m-0">
-
                           <li className="text-center pe-3">
-                            <Link to="#">
+                            <Link to={userData.tiktokLink || "#"}>
                               <img
-                                src={"https://img.icons8.com/?size=100&id=fdfLpA6fsXN2&format=png&color=000000"}
+                                src="https://img.icons8.com/?size=100&id=fdfLpA6fsXN2&format=png&color=000000"
                                 className="img-fluid rounded"
                                 alt="tiktok"
                                 width={32}
                                 height={32}
                                 loading="lazy"
                               />
-                              <text name="socialmedia-name" >tiktok</text>
+                              <text name="socialmedia-name">TikTok</text>
                             </Link>
                           </li>
                           <li className="text-center pe-3">
-                            <Link to="#">
+                            <Link to={userData.spotifyLink || "#"}>
                               <img
                                 src="https://img.icons8.com/?size=100&id=G9XXzb9XaEKX&format=png&color=000000"
                                 width={32}
@@ -136,11 +171,11 @@ const FriendProfile = () => {
                                 alt="Spotify"
                                 loading="lazy"
                               />
-                              <text name="socialmedia-name" >Spotify</text>
+                              <text name="socialmedia-name">Spotify</text>
                             </Link>
                           </li>
                           <li className="text-center pe-3">
-                            <Link to="#">
+                            <Link to={userData.instagramLink || "#"}>
                               <img
                                 src="https://img.icons8.com/?size=100&id=BrU2BBoRXiWq&format=png&color=000000"
                                 width={32}
@@ -149,24 +184,23 @@ const FriendProfile = () => {
                                 alt="Instagram"
                                 loading="lazy"
                               />
-                              <text name="socialmedia-name" >Instagram</text>
+                              <text name="socialmedia-name">Instagram</text>
                             </Link>
                           </li>
- 
                         </ul>
                       </div>
                       <div className="social-info">
                         <ul className="social-data-block social-user-meta-list d-flex align-items-center justify-content-center list-inline p-0 m-0 gap-1">
                           <li className="text-center">
-                            <p className="mb-0">3</p>
+                            <p className="mb-0">{userData.posts || 0}</p>
                             <h6>Posts</h6>
                           </li>
                           <li className="text-center">
-                            <p className="mb-0">8</p>
+                            <p className="mb-0">{userData.followers || 0}</p>
                             <h6>Followers</h6>
                           </li>
                           <li className="text-center">
-                            <p className="mb-0">5</p>
+                            <p className="mb-0">{userData.following || 0}</p>
                             <h6>Following</h6>
                           </li>
                         </ul>
@@ -190,176 +224,32 @@ const FriendProfile = () => {
                         <span className="material-symbols-outlined md-18">
                           face
                         </span>
-                        <p className="mb-0 ms-2">Web Developer</p>
+                        <p className="mb-0 ms-2">{userData.aboutMe || "Web Developer"}</p>
                       </li>
                       <li className="mb-2 d-flex align-items-center">
                         <span className="material-symbols-outlined md-18">
                           celebration
                         </span>
-                        <p className="mb-0 ms-2">
-                          07/05/2000
-                        </p>
+                        <p className="mb-0 ms-2">{userData.dob || "07/05/2000"}</p>
                       </li>
                       <li className="mb-2 d-flex align-items-center">
                         <span className="material-symbols-outlined md-18">
                           place
                         </span>
-                        <p className="mb-0 ms-2">CR</p>
+                        <p className="mb-0 ms-2">{userData.country || "CR"}</p>
                       </li>
                       <li className="d-flex align-items-center">
                         <span className="material-symbols-outlined md-18">
                           wc
                         </span>
-                        <p className="mb-0 ms-2">Male</p>
+                        <p className="mb-0 ms-2">{userData.gender || "Male"}</p>
                       </li>
                     </ul>
                   </Card.Body>
                 </Card>
-                <div className="fixed-suggestion mb-0 mb-lg-4">
-                  <Card>
-                    <Card.Header className="border-bottom">
-                      <div className="header-title">
-                        <h4 className="card-title">Photos</h4>
-                      </div>
-                      <div className="card-header-toolbar d-flex align-items-center">
-                        <p className="m-0">
-                          <Link to="#">Add Photo </Link>
-                        </p>
-                      </div>
-                    </Card.Header>
-                    <Card.Body>
-                      <ul className="profile-img-gallary p-0 m-0 list-unstyled">
-                        <li>
-                          <Link to="#">
-                            <img
-                              loading="lazy"
-                              onClick={() => imageOnSlide(1)}
-                              src={g1}
-                              alt="gallary"
-                              className="img-fluid"
-                            />
-                          </Link>
-                        </li>
-                        <li>
-                          <Link to="#">
-                            <img
-                              loading="lazy"
-                              onClick={() => imageOnSlide(2)}
-                              src={g2}
-                              alt="gallary"
-                              className="img-fluid"
-                            />
-                          </Link>
-                        </li>
-                        <li>
-                          <Link to="#">
-                            <img
-                              loading="lazy"
-                              onClick={() => imageOnSlide(3)}
-                              src={g3}
-                              alt="gallary"
-                              className="img-fluid"
-                            />
-                          </Link>
-                        </li>
-                        <li>
-                          <Link to="#">
-                            <img
-                              loading="lazy"
-                              onClick={() => imageOnSlide(4)}
-                              src={g4}
-                              alt="gallary"
-                              className="img-fluid"
-                            />
-                          </Link>
-                        </li>
-                        <li>
-                          <Link to="#">
-                            <img
-                              loading="lazy"
-                              onClick={() => imageOnSlide(5)}
-                              src={g5}
-                              alt="gallary"
-                              className="img-fluid"
-                            />
-                          </Link>
-                        </li>
-                      </ul>
-                    </Card.Body>
-                  </Card>
-                  <Card>
-                    <Card.Header className="border-bottom">
-                      <div className="header-title">
-                        <h4 className="card-title">Friends</h4>
-                      </div>
-                      <div className="card-header-toolbar d-flex align-items-center">
-                        <p className="m-0">
-                          <Link to="#">Add New </Link>
-                        </p>
-                        
-                      </div>
-                    </Card.Header>
-                    <Card.Body>
-                      <ul className="profile-img-gallary p-0 m-0 list-unstyled">
 
-                        <li>
-                          <Link to="#">
-                            <img
-                              loading="lazy"
-                              src={user09}
-                              alt="gallary"
-                              className="img-fluid"
-                            />
-                          </Link>
-                          <h6 className="mt-2 text-center">Moe Fugga</h6>
-                        </li>
-                        <li>
-                          <Link to="#">
-                            <img
-                              loading="lazy"
-                              src={user10}
-                              alt="gallary"
-                              className="img-fluid"
-                            />
-                          </Link>
-                          <h6 className="mt-2 text-center">Hal Appeno </h6>
-                        </li>
-                        <li>
-                          <Link to="#">
-                            <img
-                              loading="lazy"
-                              src={user07}
-                              alt="gallary"
-                              className="img-fluid"
-                            />
-                          </Link>
-                          <h6 className="mt-2 text-center">Zack Lee</h6>
-                        </li>
-                        <li>
-                          <Link to="#">
-                            <img
-                              loading="lazy"
-                              src={user06}
-                              alt="gallary"
-                              className="img-fluid"
-                            />
-                          </Link>
-                          <h6 className="mt-2 text-center">Terry Aki</h6>
-                        </li>
-                        <li>
-                          <Link to="#">
-                            <img
-                              loading="lazy"
-                              src={user05}
-                              alt="gallary"
-                              className="img-fluid"
-                            />
-                          </Link>
-                          <h6 className="mt-2 text-center">Greta Life</h6>
-                        </li>
-                      </ul>
-                    </Card.Body>
-                  </Card>
+                
+                <div className="fixed-suggestion mb-0 mb-lg-4">
                 </div>
               </Col>
               <Col lg={8}>
