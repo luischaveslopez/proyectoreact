@@ -23,9 +23,6 @@ import Doteddropdown from "../../../components/custom/Doted_dropdown";
 // images
 import img1 from "../../../assets/images/page-img/fun.webp";
 // import img2 from "../../../assets/images/user/11.png";
-import img3 from "../../../assets/images/icon/08.png";
-import img4 from "../../../assets/images/icon/09.png";
-import img5 from "../../../assets/images/icon/10.png";
 import user1 from "../../../assets/images/user/1.jpg";
 import user05 from "../../../assets/images/user/05.jpg";
 import user01 from "../../../assets/images/user/01.jpg";
@@ -74,7 +71,6 @@ import img62 from "../../../assets/images/page-img/62.jpg";
 import img64 from "../../../assets/images/page-img/64.jpg";
 import img65 from "../../../assets/images/page-img/65.jpg";
 import img63 from "../../../assets/images/page-img/63.jpg";
-import pageBgImg from "../../../assets/images/page-img/profile-bg1.jpg";
 
 import mountain from "../../../assets/images/page-img/mountain.webp";
 import pizza from "../../../assets/images/page-img/pizza.webp";
@@ -297,6 +293,7 @@ const UserProfile = () => {
                                 height={32}
                                 loading="lazy"
                               />
+                              <text name="socialmedia-name" >tiktok</text>
                             </Link>
                           </li>
                           <li className="text-center pe-3">
@@ -316,6 +313,7 @@ const UserProfile = () => {
                                 alt="Spotify"
                                 loading="lazy"
                               />
+                              <text name="socialmedia-name" >spotify</text>
                             </Link>
                           </li>
                           <li className="text-center pe-3">
@@ -335,6 +333,7 @@ const UserProfile = () => {
                                 alt="Instagram"
                                 loading="lazy"
                               />
+                              <text name="socialmedia-name" >Instagram</text>
                             </Link>
                           </li>
                           </ul>

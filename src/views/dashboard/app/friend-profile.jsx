@@ -10,7 +10,6 @@ import ReactFsLightbox from "fslightbox-react";
 import ShareOffcanvas from "../../../components/share-offcanvas";
 
 // images
-import img1 from "../../../assets/images/page-img/profile-bg1.jpg";
 import user1 from "../../../assets/images/user/11.png";
 import user05 from "../../../assets/images/user/05.jpg";
 import user02 from "../../../assets/images/user/02.jpg";
@@ -28,12 +27,6 @@ import icon4 from "../../../assets/images/icon/04.png";
 import icon5 from "../../../assets/images/icon/05.png";
 import icon6 from "../../../assets/images/icon/06.png";
 import icon7 from "../../../assets/images/icon/07.png";
-import icon8 from "../../../assets/images/icon/08.png";
-import icon9 from "../../../assets/images/icon/09.png";
-import icon10 from "../../../assets/images/icon/10.png";
-import icon11 from "../../../assets/images/icon/11.png";
-import icon12 from "../../../assets/images/icon/12.png";
-import icon13 from "../../../assets/images/icon/13.png";
 import g1 from "../../../assets/images/page-img/g1.jpg";
 import g2 from "../../../assets/images/page-img/g2.jpg";
 import g3 from "../../../assets/images/page-img/g3.jpg";
@@ -80,26 +73,29 @@ const FriendProfile = () => {
               <Card>
                 <Card.Body className=" profile-page p-0">
                   <div className="profile-header profile-info">
-                    <div className="cover-container">
-                      <img
-                        loading="lazy"
-                        src={img1}
-                        alt="profile-bg"
-                        className="rounded img-fluid"
-                      />
+                  <Container className="position-relative p-0">
+                    <div
+                      className="header-cover-img"
+                      style={{
+                        backgroundImage: `url(${"https://i.imgur.com/0LORAZB.png"})`,
+                        backgroundSize: "cover",
+                        backgroundRepeat: "no-repeat",
+                      }}
+                    >
                       <ul className="header-nav d-flex flex-wrap justify-end p-0 m-0">
                         <li>
                           <Link to="#" className="material-symbols-outlined">
-                            edit
+                            personadd
                           </Link>
                         </li>
                         <li>
                           <Link to="#" className="material-symbols-outlined">
-                            settings
+                            mail
                           </Link>
                         </li>
-                      </ul>
+                      </ul> 
                     </div>
+                  </Container>
                     <div className="user-detail text-center mb-3">
                       <div className="profile-img">
                         <img
@@ -116,80 +112,61 @@ const FriendProfile = () => {
                     <div className="profile-info py-5 px-md-5 px-3 d-flex align-items-center justify-content-between position-relative">
                       <div className="social-links">
                         <ul className="social-data-block d-flex align-items-center justify-content-between list-inline p-0 m-0">
+
                           <li className="text-center pe-3">
                             <Link to="#">
                               <img
-                                loading="lazy"
-                                src={icon8}
+                                src={"https://img.icons8.com/?size=100&id=fdfLpA6fsXN2&format=png&color=000000"}
                                 className="img-fluid rounded"
-                                alt="facebook"
+                                alt="tiktok"
+                                width={32}
+                                height={32}
+                                loading="lazy"
                               />
+                              <text name="socialmedia-name" >tiktok</text>
                             </Link>
                           </li>
                           <li className="text-center pe-3">
                             <Link to="#">
                               <img
-                                loading="lazy"
-                                src={icon9}
+                                src="https://img.icons8.com/?size=100&id=G9XXzb9XaEKX&format=png&color=000000"
+                                width={32}
+                                height={32}
                                 className="img-fluid rounded"
-                                alt="Twitter"
+                                alt="Spotify"
+                                loading="lazy"
                               />
+                              <text name="socialmedia-name" >Spotify</text>
                             </Link>
                           </li>
                           <li className="text-center pe-3">
                             <Link to="#">
                               <img
-                                loading="lazy"
-                                src={icon10}
+                                src="https://img.icons8.com/?size=100&id=BrU2BBoRXiWq&format=png&color=000000"
+                                width={32}
+                                height={32}
                                 className="img-fluid rounded"
                                 alt="Instagram"
-                              />
-                            </Link>
-                          </li>
-                          <li className="text-center pe-3">
-                            <Link to="#">
-                              <img
                                 loading="lazy"
-                                src={icon11}
-                                className="img-fluid rounded"
-                                alt="Google plus"
                               />
+                              <text name="socialmedia-name" >Instagram</text>
                             </Link>
                           </li>
-                          <li className="text-center pe-3">
-                            <Link to="#">
-                              <img
-                                loading="lazy"
-                                src={icon12}
-                                className="img-fluid rounded"
-                                alt="You tube"
-                              />
-                            </Link>
-                          </li>
-                          <li className="text-center pe-3">
-                            <Link to="#">
-                              <img
-                                loading="lazy"
-                                src={icon13}
-                                className="img-fluid rounded"
-                                alt="linkedin"
-                              />
-                            </Link>
-                          </li>
+ 
                         </ul>
                       </div>
                       <div className="social-info">
                         <ul className="social-data-block social-user-meta-list d-flex align-items-center justify-content-center list-inline p-0 m-0 gap-1">
                           <li className="text-center">
-                            <p className="mb-0">690</p>
+                            <p className="mb-0">3</p>
                             <h6>Posts</h6>
                           </li>
                           <li className="text-center">
-                            <p className="mb-0">206</p>
+                            <p className="mb-0">8</p>
                             <h6>Followers</h6>
                           </li>
                           <li className="text-center">
-                            <p className="mb-0">100</p>
+                            <p className="mb-0">5</p>
                             <h6>Following</h6>
                           </li>
                         </ul>
@@ -211,29 +188,29 @@ const FriendProfile = () => {
                     <ul className="list-inline p-0 m-0">
                       <li className="mb-2 d-flex align-items-center">
                         <span className="material-symbols-outlined md-18">
-                          person
+                          face
                         </span>
                         <p className="mb-0 ms-2">Web Developer</p>
                       </li>
                       <li className="mb-2 d-flex align-items-center">
                         <span className="material-symbols-outlined md-18">
-                          gpp_good
+                          celebration
                         </span>
                         <p className="mb-0 ms-2">
-                          Success in slowing economic activity.
+                          07/05/2000
                         </p>
                       </li>
                       <li className="mb-2 d-flex align-items-center">
                         <span className="material-symbols-outlined md-18">
                           place
                         </span>
-                        <p className="mb-0 ms-2">USA</p>
+                        <p className="mb-0 ms-2">CR</p>
                       </li>
                       <li className="d-flex align-items-center">
                         <span className="material-symbols-outlined md-18">
-                          favorite_border
+                          wc
                         </span>
-                        <p className="mb-0 ms-2">Single</p>
+                        <p className="mb-0 ms-2">Male</p>
                       </li>
                     </ul>
                   </Card.Body>
@@ -307,50 +284,6 @@ const FriendProfile = () => {
                             />
                           </Link>
                         </li>
-                        <li>
-                          <Link to="#">
-                            <img
-                              loading="lazy"
-                              onClick={() => imageOnSlide(6)}
-                              src={g6}
-                              alt="gallary"
-                              className="img-fluid"
-                            />
-                          </Link>
-                        </li>
-                        <li>
-                          <Link to="#">
-                            <img
-                              loading="lazy"
-                              onClick={() => imageOnSlide(7)}
-                              src={g7}
-                              alt="gallary"
-                              className="img-fluid"
-                            />
-                          </Link>
-                        </li>
-                        <li>
-                          <Link to="#">
-                            <img
-                              loading="lazy"
-                              onClick={() => imageOnSlide(8)}
-                              src={g8}
-                              alt="gallary"
-                              className="img-fluid"
-                            />
-                          </Link>
-                        </li>
-                        <li>
-                          <Link to="#">
-                            <img
-                              loading="lazy"
-                              onClick={() => imageOnSlide(9)}
-                              src={g9}
-                              alt="gallary"
-                              className="img-fluid"
-                            />
-                          </Link>
-                        </li>
                       </ul>
                     </Card.Body>
                   </Card>
@@ -363,54 +296,12 @@ const FriendProfile = () => {
                         <p className="m-0">
                           <Link to="#">Add New </Link>
                         </p>
+                        
                       </div>
                     </Card.Header>
                     <Card.Body>
                       <ul className="profile-img-gallary p-0 m-0 list-unstyled">
-                        <li>
-                          <Link to="#">
-                            <img
-                              loading="lazy"
-                              src={user05}
-                              alt="gallary"
-                              className="img-fluid"
-                            />
-                          </Link>
-                          <h6 className="mt-2 text-center">Anna Rexia</h6>
-                        </li>
-                        <li>
-                          <Link to="#">
-                            <img
-                              loading="lazy"
-                              src={user06}
-                              alt="gallary"
-                              className="img-fluid"
-                            />
-                          </Link>
-                          <h6 className="mt-2 text-center">Tara Zona</h6>
-                        </li>
-                        <li>
-                          <Link to="#">
-                            <img
-                              loading="lazy"
-                              src={user07}
-                              alt="gallary"
-                              className="img-fluid"
-                            />
-                          </Link>
-                          <h6 className="mt-2 text-center">Polly Tech</h6>
-                        </li>
-                        <li>
-                          <Link to="#">
-                            <img
-                              loading="lazy"
-                              src={user08}
-                              alt="gallary"
-                              className="img-fluid"
-                            />
-                          </Link>
-                          <h6 className="mt-2 text-center">Bill Emia</h6>
-                        </li>
+
                         <li>
                           <Link to="#">
                             <img
