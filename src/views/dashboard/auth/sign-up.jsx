@@ -2,23 +2,16 @@ import React, { useState, useEffect } from "react";
 import { Row, Col, Container, Form, Button } from "react-bootstrap";
 import { Link, useNavigate } from "react-router-dom";
 import { createUserWithEmailAndPassword, fetchSignInMethodsForEmail, signInWithEmailAndPassword } from "firebase/auth";
-import { collection, addDoc, setDoc, doc } from "firebase/firestore";
+import { setDoc, doc } from "firebase/firestore";
 import Swal from "sweetalert2";
-
-//swiper
+import { auth, db } from "../../../config/firebase";
 import { Swiper, SwiperSlide } from "swiper/react";
 import SwiperCore from "swiper";
 import { Navigation, Autoplay } from "swiper/modules";
-
-// Import selectors & action from setting store
 import * as SettingSelector from "../../../store/setting/selectors";
-// Redux Selector / Action
 import { useSelector } from "react-redux";
 
-// Import Firebase configuration
-import { auth, db } from "../../../config/firebase";
-
-// Install Swiper modules
+// Instalar módulos de Swiper
 SwiperCore.use([Navigation, Autoplay]);
 
 const SignUp = () => {
@@ -29,7 +22,6 @@ const SignUp = () => {
   const [name, setName] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // Manejar la redirección de Spotify y extraer el token de acceso
   useEffect(() => {
     const hash = window.location.hash;
     if (hash) {
@@ -37,7 +29,6 @@ const SignUp = () => {
       const token = params.get('access_token');
       
       if (token) {
-        // Guardar el token en localStorage o manejarlo según sea necesario
         localStorage.setItem('spotifyToken', token);
         authenticateWithSpotify(token);
       }
@@ -48,7 +39,6 @@ const SignUp = () => {
     setLoading(true);
     
     try {
-      // Aquí puedes usar el token de Spotify para obtener datos del usuario
       const response = await fetch("https://api.spotify.com/v1/me", {
         headers: {
           Authorization: `Bearer ${token}`
@@ -56,30 +46,26 @@ const SignUp = () => {
       });
       
       const spotifyUser = await response.json();
-
-      // Buscar o crear el usuario en Firebase
       const email = spotifyUser.email;
-      const password = "spotifyUserGeneratedPassword"; // Debes generar una contraseña segura para los usuarios de Spotify
+      const password = "spotifyUserGeneratedPassword";
 
       try {
-        // Intenta iniciar sesión si el usuario ya existe
         await signInWithEmailAndPassword(auth, email, password);
       } catch (error) {
-        // Si el usuario no existe, créalo
         await createUserWithEmailAndPassword(auth, email, password);
       }
 
       const user = auth.currentUser;
+      const userDocRef = doc(db, "users", user.uid);
 
-      // Guardar o actualizar los datos del usuario en Firestore
-      await setDoc(doc(db, "users", user.uid), {
+      await setDoc(userDocRef, {
         uid: user.uid,
         username: name || spotifyUser.display_name,
         email: email,
         spotifyToken: token,
         spotifyId: spotifyUser.id,
         spotifyData: spotifyUser,
-      });
+      }, { merge: true });
 
       Swal.fire({
         icon: 'success',
@@ -122,7 +108,6 @@ const SignUp = () => {
     setLoading(true);
 
     try {
-      // Verificar si el correo ya está registrado
       const signInMethods = await fetchSignInMethodsForEmail(auth, email);
       if (signInMethods.length > 0) {
         Swal.fire({
@@ -134,15 +119,15 @@ const SignUp = () => {
         return;
       }
 
-      // Crear el nuevo usuario
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
+      const userDocRef = doc(db, "users", user.uid);
 
-      await addDoc(collection(db, "users"), {
+      await setDoc(userDocRef, {
         uid: user.uid,
         username: name,
         email: email,
-      });
+      }, { merge: true });
 
       Swal.fire({
         icon: 'success',
@@ -165,7 +150,7 @@ const SignUp = () => {
 
   const handleSpotifySignUp = () => {
     const clientId = 'b63e75461faf4c97b7ce8202a3d81d79';
-    const redirectUri = 'http://localhost:3000/auth/sign-up'; // Mismo componente para manejar el callback
+    const redirectUri = 'http://localhost:3000/auth/sign-up';
     const scopes = [
       'user-read-email',
       'user-read-private',
@@ -175,178 +160,175 @@ const SignUp = () => {
       '%20'
     )}&response_type=token&show_dialog=true`;
 
-    // Redirigir al usuario a la página de autorización de Spotify
     window.location.href = spotifyAuthUrl;
   };
 
   return (
-    <>
-      <section className="sign-in-page">
-        <Container fluid>
-          <Row className="align-items-center">
-            <Col md={6} className="overflow-hidden position-relative">
-              <div className="bg-primary w-100 h-100 position-absolute top-0 bottom-0 start-0 end-0"></div>
-              <div className="container-inside z-1">
-                <div className="main-circle circle-small"></div>
-                <div className="main-circle circle-medium"></div>
-                <div className="main-circle circle-large"></div>
-                <div className="main-circle circle-xlarge"></div>
-                <div className="main-circle circle-xxlarge"></div>
-              </div>
-              <div className="sign-in-detail container-inside-top">
-                <Swiper
-                  className="list-inline m-0 p-0"
-                  spaceBetween={30}
-                  centeredSlides={true}
-                  loop={true}
-                  autoplay={{
-                    delay: 2000,
-                    disableOnInteraction: false,
-                  }}
+    <section className="sign-in-page">
+      <Container fluid>
+        <Row className="align-items-center">
+          <Col md={6} className="overflow-hidden position-relative">
+            <div className="bg-primary w-100 h-100 position-absolute top-0 bottom-0 start-0 end-0"></div>
+            <div className="container-inside z-1">
+              <div className="main-circle circle-small"></div>
+              <div className="main-circle circle-medium"></div>
+              <div className="main-circle circle-large"></div>
+              <div className="main-circle circle-xlarge"></div>
+              <div className="main-circle circle-xxlarge"></div>
+            </div>
+            <div className="sign-in-detail container-inside-top">
+              <Swiper
+                className="list-inline m-0 p-0"
+                spaceBetween={30}
+                centeredSlides={true}
+                loop={true}
+                autoplay={{
+                  delay: 2000,
+                  disableOnInteraction: false,
+                }}
+              >
+                <ul className="swiper-wrapper list-inline m-0 p-0">
+                  <SwiperSlide>
+                    <img
+                      src="https://31.media.tumblr.com/8ceef31f2791cc61882ca4ea2a0f559f/tumblr_nhelub15rI1rtpvcro1_500.gif"
+                      className="signin-img img-fluid mb-5 rounded-3"
+                      alt="images"
+                    />
+                    <h2 className="mb-3 text-white fw-semibold">
+                      Power UP Your Friendship
+                    </h2>
+                    <p className="font-size-16 text-white mb-0">
+                      It is a long established fact that a reader will be
+                      <br /> distracted by the readable content.
+                    </p>
+                  </SwiperSlide>
+                  <SwiperSlide>
+                    <img
+                      src="https://media2.giphy.com/media/5O0NJ5MOVdLKjor2Z5/200.gif?cid=6c09b952u4ee8cpcqzt63yoxflricm74iuqaqruj4w7t7l5l&ep=v1_internal_gif_by_id&rid=200.gif&ct=g"
+                      className="signin-img img-fluid mb-5 rounded-3"
+                      alt="images"
+                    />
+                    <h2 className="mb-3 text-white fw-semibold">
+                      Connect with the world
+                    </h2>
+                    <p className="font-size-16 text-white mb-0">
+                      It is a long established fact that a reader will be
+                      <br /> distracted by the readable content.
+                    </p>
+                  </SwiperSlide>
+                  <SwiperSlide>
+                    <img
+                      src="https://i.pinimg.com/originals/6f/64/da/6f64da80bc6792e200f943fdf90b253b.gif"
+                      className="signin-img img-fluid mb-5 rounded-3"
+                      alt="images"
+                    />
+                    <h2 className="mb-3 text-white fw-semibold">
+                      Together Is better
+                    </h2>
+                    <p className="font-size-16 text-white mb-0">
+                      It is a long established fact that a reader will be
+                      <br /> distracted by the readable content.
+                    </p>
+                  </SwiperSlide>
+                </ul>
+              </Swiper>
+            </div>
+          </Col>
+          <Col md={6}>
+            <div className="sign-in-from text-center">
+              <Link
+                to="/"
+                className="d-inline-flex align-items-center justify-content-center gap-2"
+              >
+                <img
+                  src="https://i.postimg.cc/C5FqYncS/Untitled-design-3.png"
+                  width="50"
+                  alt="Jammify Logo"
+                />
+                <h2 className="logo-title" data-setting="app_name">
+                  Jammify
+                </h2>
+              </Link>
+              <p className="mt-3 font-size-16">
+                Welcome to Jammify, a platform to connect with
+                <br /> the social world
+              </p>
+              <Form className="mt-5">
+                <Form.Group className="form-group text-start">
+                  <h6 className="form-label fw-bold">Your Username</h6>
+                  <Form.Control
+                    type="text"
+                    className="form-control mb-0"
+                    placeholder="Your Username"
+                    defaultValue=""
+                    onChange={(e) => setName(e.target.value)}
+                  />
+                </Form.Group>
+                <Form.Group className="form-group text-start">
+                  <h6 className="form-label fw-bold">Email Address</h6>
+                  <Form.Control
+                    type="email"
+                    className="form-control mb-0"
+                    placeholder="Email Address"
+                    onChange={(e) => setEmail(e.target.value)}
+                  />
+                </Form.Group>
+                <Form.Group className="form-group text-start">
+                  <h6 className="form-label fw-bold">Your Password</h6>
+                  <Form.Control
+                    type="password"
+                    className="form-control mb-0"
+                    placeholder="Password"
+                    defaultValue=""
+                    onChange={(e) => setPassword(e.target.value)}
+                  />
+                </Form.Group>
+                <div className="d-flex align-items-center justify-content-between">
+                  <Form.Check className="form-check d-inline-block m-0">
+                    <Form.Check.Input
+                      type="checkbox"
+                      className="form-check-input"
+                    />
+                    <h6 className="form-check-label fw-500 font-size-14">
+                      I accept{" "}
+                      <Link className="fw-light ms-1" to="/dashboard/extrapages/terms-of-service">
+                        Terms and Conditions
+                      </Link>
+                    </h6>
+                  </Form.Check>
+                </div>
+                <Button
+                  variant="primary"
+                  type="button"
+                  className="btn btn-primary mt-4 fw-semibold text-uppercase w-100"
+                  onClick={handleSignUp}
+                  disabled={loading}
                 >
-                  <ul className="swiper-wrapper list-inline m-0 p-0">
-                    <SwiperSlide>
-                      <img
-                        src="https://31.media.tumblr.com/8ceef31f2791cc61882ca4ea2a0f559f/tumblr_nhelub15rI1rtpvcro1_500.gif"
-                        className="signin-img img-fluid mb-5 rounded-3"
-                        alt="images"
-                      />
-                      <h2 className="mb-3 text-white fw-semibold">
-                        Power UP Your Friendship
-                      </h2>
-                      <p className="font-size-16 text-white mb-0">
-                        It is a long established fact that a reader will be
-                        <br /> distracted by the readable content.
-                      </p>
-                    </SwiperSlide>
-                    <SwiperSlide>
-                      <img
-                        src="https://media2.giphy.com/media/5O0NJ5MOVdLKjor2Z5/200.gif?cid=6c09b952u4ee8cpcqzt63yoxflricm74iuqaqruj4w7t7l5l&ep=v1_internal_gif_by_id&rid=200.gif&ct=g"
-                        className="signin-img img-fluid mb-5 rounded-3"
-                        alt="images"
-                      />
-                      <h2 className="mb-3 text-white fw-semibold">
-                        Connect with the world
-                      </h2>
-                      <p className="font-size-16 text-white mb-0">
-                        It is a long established fact that a reader will be
-                        <br /> distracted by the readable content.
-                      </p>
-                    </SwiperSlide>
-                    <SwiperSlide>
-                      <img
-                        src="https://i.pinimg.com/originals/6f/64/da/6f64da80bc6792e200f943fdf90b253b.gif"
-                        className="signin-img img-fluid mb-5 rounded-3"
-                        alt="images"
-                      />
-                      <h2 className="mb-3 text-white fw-semibold">
-                        Together Is better
-                      </h2>
-                      <p className="font-size-16 text-white mb-0">
-                        It is a long established fact that a reader will be
-                        <br /> distracted by the readable content.
-                      </p>
-                    </SwiperSlide>
-                  </ul>
-                </Swiper>
-              </div>
-            </Col>
-            <Col md={6}>
-              <div className="sign-in-from text-center">
-                <Link
-                  to="/"
-                  className="d-inline-flex align-items-center justify-content-center gap-2"
+                  {loading ? 'Signing Up...' : 'Sign Up'}
+                </Button>
+                <Button
+                  variant="outline-light"
+                  type="button"
+                  className="btn btn-outline-light mt-3 fw-semibold text-uppercase w-100 d-flex align-items-center justify-content-center gap-2"
+                  onClick={handleSpotifySignUp}
                 >
                   <img
-                    src="https://i.postimg.cc/C5FqYncS/Untitled-design-3.png"
-                    width="50"
-                    alt="Jammify Logo"
+                    src="https://upload.wikimedia.org/wikipedia/commons/8/84/Spotify_icon.svg"
+                    width="20"
+                    alt="Spotify Logo"
                   />
-                  <h2 className="logo-title" data-setting="app_name">
-                    Jammify
-                  </h2>
-                </Link>
-                <p className="mt-3 font-size-16">
-                  Welcome to Jammify, a platform to connect with
-                  <br /> the social world
-                </p>
-                <Form className="mt-5">
-                  <Form.Group className="form-group text-start">
-                    <h6 className="form-label fw-bold">Your Full Name</h6>
-                    <Form.Control
-                      type="text"
-                      className="form-control mb-0"
-                      placeholder="Your Full Name"
-                      defaultValue=""
-                      onChange={(e) => setName(e.target.value)}
-                    />
-                  </Form.Group>
-                  <Form.Group className="form-group text-start">
-                    <h6 className="form-label fw-bold">Email Address</h6>
-                    <Form.Control
-                      type="email"
-                      className="form-control mb-0"
-                      placeholder="Email Address"
-                      onChange={(e) => setEmail(e.target.value)}
-                    />
-                  </Form.Group>
-                  <Form.Group className="form-group text-start">
-                    <h6 className="form-label fw-bold">Your Password</h6>
-                    <Form.Control
-                      type="password"
-                      className="form-control mb-0"
-                      placeholder="Password"
-                      defaultValue=""
-                      onChange={(e) => setPassword(e.target.value)}
-                    />
-                  </Form.Group>
-                  <div className="d-flex align-items-center justify-content-between">
-                    <Form.Check className="form-check d-inline-block m-0">
-                      <Form.Check.Input
-                        type="checkbox"
-                        className="form-check-input"
-                      />
-                      <h6 className="form-check-label fw-500 font-size-14">
-                        I accept{" "}
-                        <Link className="fw-light ms-1" to="/dashboard/extrapages/terms-of-service">
-                          Terms and Conditions
-                        </Link>
-                      </h6>
-                    </Form.Check>
-                  </div>
-                  <Button
-                    variant="primary"
-                    type="button"
-                    className="btn btn-primary mt-4 fw-semibold text-uppercase w-100"
-                    onClick={handleSignUp}
-                    disabled={loading}
-                  >
-                    {loading ? 'Signing Up...' : 'Sign Up'}
-                  </Button>
-                  <Button
-                    variant="outline-light"
-                    type="button"
-                    className="btn btn-outline-light mt-3 fw-semibold text-uppercase w-100 d-flex align-items-center justify-content-center gap-2"
-                    onClick={handleSpotifySignUp} // Llama a la función que maneja la autenticación con Spotify
-                  >
-                    <img
-                      src="https://upload.wikimedia.org/wikipedia/commons/8/84/Spotify_icon.svg"
-                      width="20"
-                      alt="Spotify Logo"
-                    />
-                    Sign up with Spotify
-                  </Button>
-                  <h6 className="mt-5">
-                    Already Have An Account ?{" "}
-                    <Link to={"/auth/sign-in"}>Login</Link>
-                  </h6>
-                </Form>
-              </div>
-            </Col>
-          </Row>
-        </Container>
-      </section>
-    </>
+                  Sign up with Spotify
+                </Button>
+                <h6 className="mt-5">
+                  Already Have An Account ?{" "}
+                  <Link to={"/auth/sign-in"}>Login</Link>
+                </h6>
+              </Form>
+            </div>
+          </Col>
+        </Row>
+      </Container>
+    </section>
   );
 };
 

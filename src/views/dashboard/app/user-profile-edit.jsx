@@ -4,6 +4,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { getAuth, updatePassword, EmailAuthProvider, reauthenticateWithCredential } from 'firebase/auth';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import Swal from 'sweetalert2'; // Importa SweetAlert2
 import { db } from '../../../config/firebase';
 
 //image
@@ -14,7 +15,7 @@ const UserProfileEdit = () => {
         firstName: '',
         lastName: '',
         username: '',
-        gender: '',
+        gender: '', // Esto está bien inicializado
         dob: '',
         country: '',
         aboutMe: '',
@@ -39,7 +40,6 @@ const UserProfileEdit = () => {
     const navigate = useNavigate();
     const storage = getStorage();
 
-    // Crear un ref para el input de tipo file
     const fileInputRef = useRef(null);
 
     useEffect(() => {
@@ -54,7 +54,7 @@ const UserProfileEdit = () => {
                             firstName: data.firstName || '',
                             lastName: data.lastName || '',
                             username: data.username || user.displayName || '',
-                            gender: data.gender || '',
+                            gender: data.gender || '', // Esto también se corrige
                             dob: data.dob || '',
                             country: data.country || '',
                             aboutMe: data.aboutMe || '',
@@ -65,7 +65,6 @@ const UserProfileEdit = () => {
                             spotifyLink: data.spotifyLink || ''
                         }));
                     } else {
-                        // Manejo de usuarios nuevos o sin datos previos
                         setUserData(prevState => ({
                             ...prevState,
                             username: user.displayName || '',
@@ -85,6 +84,13 @@ const UserProfileEdit = () => {
         setUserData(prevState => ({
             ...prevState,
             [id]: value
+        }));
+    };
+
+    const handleGenderChange = (e) => {
+        setUserData(prevState => ({
+            ...prevState,
+            gender: e.target.value // Actualiza el campo de género correctamente
         }));
     };
 
@@ -132,12 +138,21 @@ const UserProfileEdit = () => {
                     ...userData,
                     profilePic: profilePicURL,
                     uid: user.uid,
-                }, { merge: true }); // <- Aquí es donde se realiza la fusión de datos
+                }, { merge: true });
 
-                alert("Profile updated successfully!");
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Profile Updated',
+                    text: 'Your profile has been updated successfully!',
+                });
             } catch (error) {
                 console.error("Error updating profile: ", error);
                 setImageUploading(false);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'There was an error updating your profile.',
+                });
             }
         }
     };
@@ -145,7 +160,11 @@ const UserProfileEdit = () => {
     const handlePasswordSubmit = async (e) => {
         e.preventDefault();
         if (passwords.newPassword !== passwords.verifyPassword) {
-            alert("New password and verification password do not match.");
+            Swal.fire({
+                icon: 'warning',
+                title: 'Passwords Do Not Match',
+                text: 'New password and verification password do not match.',
+            });
             return;
         }
         if (user) {
@@ -155,12 +174,13 @@ const UserProfileEdit = () => {
             );
 
             try {
-                // Reauthenticate the user
                 await reauthenticateWithCredential(user, credential);
-
-                // Update the user's password
                 await updatePassword(user, passwords.newPassword);
-                alert("Password updated successfully!");
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Password Updated',
+                    text: 'Your password has been updated successfully!',
+                });
                 setPasswords({
                     currentPassword: '',
                     newPassword: '',
@@ -168,7 +188,11 @@ const UserProfileEdit = () => {
                 });
             } catch (error) {
                 console.error("Error updating password: ", error);
-                alert("Error updating password: " + error.message);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: `There was an error updating your password: ${error.message}`,
+                });
             }
         }
     };
@@ -194,7 +218,6 @@ const UserProfileEdit = () => {
                                                         Change Password
                                                     </Nav.Link>
                                                 </Nav.Item>
-                            
                                                 <Nav.Item as="li" className="col-md-3 p-0">
                                                     <Nav.Link eventKey="fourth" role="button">
                                                         Social Media
@@ -291,10 +314,9 @@ const UserProfileEdit = () => {
                                                                     className="form-check-input"
                                                                     type="radio"
                                                                     name="gender"
-                                                                    id="male"
                                                                     value="Male"
                                                                     checked={userData.gender === "Male"}
-                                                                    onChange={handleChange}
+                                                                    onChange={handleGenderChange} // Corrige el cambio de género
                                                                 />
                                                                 <Form.Check.Label className="form-check-label" htmlFor="male">Male</Form.Check.Label>
                                                             </Form.Check>{" "}
@@ -303,10 +325,9 @@ const UserProfileEdit = () => {
                                                                     className="form-check-input"
                                                                     type="radio"
                                                                     name="gender"
-                                                                    id="female"
                                                                     value="Female"
                                                                     checked={userData.gender === "Female"}
-                                                                    onChange={handleChange}
+                                                                    onChange={handleGenderChange} // Corrige el cambio de género
                                                                 />
                                                                 <Form.Check.Label className="form-check-label" htmlFor="female">Female</Form.Check.Label>
                                                             </Form.Check>
