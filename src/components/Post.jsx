@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Col, Dropdown, Collapse, Modal, Button, Form } from "react-bootstrap";
 import { Link } from "react-router-dom";
 import { getAuth } from "firebase/auth";
-import { doc, updateDoc, deleteDoc, getDoc, addDoc, collection, Timestamp } from "firebase/firestore";
+import { doc, updateDoc, deleteDoc, getDoc, Timestamp } from "firebase/firestore";
 import { db } from "../config/firebase"; 
 import Swal from 'sweetalert2';
 
@@ -33,6 +33,10 @@ const Post = ({
   const [newComment, setNewComment] = useState("");
   const [commentsList, setCommentsList] = useState([]);
   const [showCommentsModal, setShowCommentsModal] = useState(false);
+  const [userProfilePic, setUserProfilePic] = useState("defaultUserImage");
+  const [editCommentText, setEditCommentText] = useState("");
+  const [selectedComment, setSelectedComment] = useState(null);
+  const [showEditCommentModal, setShowEditCommentModal] = useState(false);
 
   const auth = getAuth();
   const currentUser = auth.currentUser;
@@ -55,6 +59,22 @@ const Post = ({
 
     fetchPostData();
   }, [postId, currentUser]);
+
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      if (currentUser) {
+        const userDocRef = doc(db, "users", currentUser.uid);
+        const userDoc = await getDoc(userDocRef);
+
+        if (userDoc.exists()) {
+          const userData = userDoc.data();
+          setUserProfilePic(userData.profilePic || "defaultUserImage");
+        }
+      }
+    };
+
+    fetchUserProfile();
+  }, [currentUser]);
 
   const handleRating = async (rating) => {
     if (!currentUser) {
@@ -143,7 +163,6 @@ const Post = ({
         timer: 2000,
         showConfirmButton: false,
       });
-      // Aquí puedes agregar una función para actualizar la lista de posts si es necesario
     } catch (error) {
       console.error("Error deleting post:", error);
     }
@@ -153,17 +172,28 @@ const Post = ({
     e.preventDefault();
     if (!newComment.trim()) return;
 
-    const commentData = {
-      user: {
-        uid: currentUser.uid,
-        username: currentUser.displayName || "Anonymous",
-        profilePic: currentUser.photoURL || "defaultUserImage",
-      },
-      text: newComment,
-      createdAt: Timestamp.now(),
-    };
-
     try {
+      const userDocRef = doc(db, "users", currentUser.uid);
+      const userDoc = await getDoc(userDocRef);
+
+      if (!userDoc.exists()) {
+        console.error("User document not found.");
+        return;
+      }
+
+      const userData = userDoc.data();
+
+      const commentData = {
+        id: Timestamp.now().toMillis(), // Unique ID for the comment
+        user: {
+          uid: currentUser.uid,
+          username: userData.username || "Anonymous",
+          profilePic: userData.profilePic || "defaultUserImage",
+        },
+        text: newComment,
+        createdAt: Timestamp.now(),
+      };
+
       const postDocRef = doc(db, "posts", postId);
       const postDoc = await getDoc(postDocRef);
 
@@ -180,6 +210,61 @@ const Post = ({
       }
     } catch (error) {
       console.error("Error adding comment:", error);
+    }
+  };
+
+  const handleEditComment = (comment) => {
+    setSelectedComment(comment);
+    setEditCommentText(comment.text);
+    setShowEditCommentModal(true);
+  };
+
+  const handleSaveEditedComment = async () => {
+    if (!editCommentText.trim()) return;
+
+    try {
+      const postDocRef = doc(db, "posts", postId);
+      const postDoc = await getDoc(postDocRef);
+
+      if (postDoc.exists()) {
+        const postData = postDoc.data();
+        const updatedComments = postData.comments.map((comment) =>
+          comment.id === selectedComment.id
+            ? { ...comment, text: editCommentText }
+            : comment
+        );
+
+        await updateDoc(postDocRef, {
+          comments: updatedComments,
+        });
+
+        setCommentsList(updatedComments);
+        setShowEditCommentModal(false);
+      }
+    } catch (error) {
+      console.error("Error editing comment:", error);
+    }
+  };
+
+  const handleDeleteComment = async (comment) => {
+    try {
+      const postDocRef = doc(db, "posts", postId);
+      const postDoc = await getDoc(postDocRef);
+
+      if (postDoc.exists()) {
+        const postData = postDoc.data();
+        const updatedComments = postData.comments.filter(
+          (c) => c.id !== comment.id
+        );
+
+        await updateDoc(postDocRef, {
+          comments: updatedComments,
+        });
+
+        setCommentsList(updatedComments);
+      }
+    } catch (error) {
+      console.error("Error deleting comment:", error);
     }
   };
 
@@ -349,12 +434,56 @@ const Post = ({
                           loading="lazy"
                         />
                       </div>
-                      <div>
-                        <h6 className="mb-0">{comment.user.username}</h6>
+                      <div className="w-100">
+                        <div className="d-flex justify-content-between align-items-center">
+                          <h6 className="mb-0">
+                            {comment.user.username}
+                            <small className="text-muted ms-2">
+                              {new Date(comment.createdAt.seconds * 1000).toLocaleString()}
+                            </small>
+                          </h6>
+                          {currentUser?.uid === comment.user.uid && (
+                            <div className="d-flex align-items-top">
+                              <Dropdown>
+                                <Dropdown.Toggle
+                                  variant="lh-1"
+                                  id="comment-option"
+                                  as="span"
+                                  bsPrefix=" "
+                                >
+                                  <span className="material-symbols-outlined">more_horiz</span>
+                                </Dropdown.Toggle>
+                                <Dropdown.Menu className="dropdown-menu m-0 p-0">
+                                  <Dropdown.Item
+                                    className="p-3"
+                                    onClick={() => handleEditComment(comment)}
+                                  >
+                                    <div className="d-flex align-items-top">
+                                      <span className="material-symbols-outlined">edit</span>
+                                      <div className="data ms-2">
+                                        <h6>Edit Comment</h6>
+                                        <p className="mb-0">Edit this comment</p>
+                                      </div>
+                                    </div>
+                                  </Dropdown.Item>
+                                  <Dropdown.Item
+                                    className="p-3"
+                                    onClick={() => handleDeleteComment(comment)}
+                                  >
+                                    <div className="d-flex align-items-top">
+                                      <span className="material-symbols-outlined">delete</span>
+                                      <div className="data ms-2">
+                                        <h6>Delete Comment</h6>
+                                        <p className="mb-0">Permanently remove this comment</p>
+                                      </div>
+                                    </div>
+                                  </Dropdown.Item>
+                                </Dropdown.Menu>
+                              </Dropdown>
+                            </div>
+                          )}
+                        </div>
                         <p className="text-body">{comment.text}</p>
-                        <small className="text-muted">
-                          {new Date(comment.createdAt.seconds * 1000).toLocaleString()}
-                        </small>
                       </div>
                     </li>
                   ))}
@@ -371,8 +500,8 @@ const Post = ({
                   <div className="d-flex align-items-center gap-3">
                     <div className="flex-shrink-0">
                       <img
-                        src={currentUser?.photoURL || "defaultUserImage"}
-                        alt={currentUser?.displayName || "User"}
+                        src={userProfilePic}
+                        alt="User"
                         className="avatar-48 rounded-circle img-fluid"
                         loading="lazy"
                       />
@@ -448,6 +577,34 @@ const Post = ({
         </Modal.Footer>
       </Modal>
 
+      {/* Modal para editar comentario */}
+      <Modal show={showEditCommentModal} onHide={() => setShowEditCommentModal(false)}>
+        <Modal.Header closeButton>
+          <Modal.Title>Edit Comment</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <Form>
+            <Form.Group controlId="formEditCommentText">
+              <Form.Label>Edit your comment text</Form.Label>
+              <Form.Control
+                as="textarea"
+                rows={3}
+                value={editCommentText}
+                onChange={(e) => setEditCommentText(e.target.value)}
+              />
+            </Form.Group>
+          </Form>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={() => setShowEditCommentModal(false)}>
+            Cancel
+          </Button>
+          <Button variant="primary" onClick={handleSaveEditedComment}>
+            Save Changes
+          </Button>
+        </Modal.Footer>
+      </Modal>
+
       {/* Modal para ver todos los comentarios */}
       <Modal show={showCommentsModal} onHide={() => setShowCommentsModal(false)}>
         <Modal.Header closeButton>
@@ -465,12 +622,56 @@ const Post = ({
                     loading="lazy"
                   />
                 </div>
-                <div>
-                  <h6 className="mb-0">{comment.user.username}</h6>
+                <div className="w-100">
+                  <div className="d-flex justify-content-between align-items-center">
+                    <h6 className="mb-0">
+                      {comment.user.username}
+                      <small className="text-muted ms-2">
+                        {new Date(comment.createdAt.seconds * 1000).toLocaleString()}
+                      </small>
+                    </h6>
+                    {currentUser?.uid === comment.user.uid && (
+                      <div className="d-flex align-items-top">
+                        <Dropdown>
+                          <Dropdown.Toggle
+                            variant="lh-1"
+                            id="comment-option"
+                            as="span"
+                            bsPrefix=" "
+                          >
+                            <span className="material-symbols-outlined">more_horiz</span>
+                          </Dropdown.Toggle>
+                          <Dropdown.Menu className="dropdown-menu m-0 p-0">
+                            <Dropdown.Item
+                              className="p-3"
+                              onClick={() => handleEditComment(comment)}
+                            >
+                              <div className="d-flex align-items-top">
+                                <span className="material-symbols-outlined">edit</span>
+                                <div className="data ms-2">
+                                  <h6>Edit Comment</h6>
+                                  <p className="mb-0">Edit this comment</p>
+                                </div>
+                              </div>
+                            </Dropdown.Item>
+                            <Dropdown.Item
+                              className="p-3"
+                              onClick={() => handleDeleteComment(comment)}
+                            >
+                              <div className="d-flex align-items-top">
+                                <span className="material-symbols-outlined">delete</span>
+                                <div className="data ms-2">
+                                  <h6>Delete Comment</h6>
+                                  <p className="mb-0">Permanently remove this comment</p>
+                                </div>
+                              </div>
+                            </Dropdown.Item>
+                          </Dropdown.Menu>
+                        </Dropdown>
+                      </div>
+                    )}
+                  </div>
                   <p className="text-body">{comment.text}</p>
-                  <small className="text-muted">
-                    {new Date(comment.createdAt.seconds * 1000).toLocaleString()}
-                  </small>
                 </div>
               </li>
             ))}
