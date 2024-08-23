@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Row, Col, Container } from "react-bootstrap";
-import { collection, getDocs } from "firebase/firestore"; 
+import { collection, onSnapshot } from "firebase/firestore"; 
 import { db } from "../../config/firebase"; 
 import Card from "../../components/Card";
 import CreatePost from "../../components/create-post";
@@ -33,19 +33,20 @@ const Index = () => {
     slide: 1,
   });
 
-  // Obtener los posts de Firebase
+  // Obtener los posts en tiempo real desde Firebase
   useEffect(() => {
-    const fetchPosts = async () => {
-      const postsCollection = collection(db, "posts");
-      const postsSnapshot = await getDocs(postsCollection);
-      const postsList = postsSnapshot.docs.map((doc) => ({
+    const postsCollection = collection(db, "posts");
+    
+    const unsubscribe = onSnapshot(postsCollection, (snapshot) => {
+      const postsList = snapshot.docs.map((doc) => ({
         id: doc.id,
         ...doc.data(),
       }));
       setPosts(postsList);
-    };
+    });
 
-    fetchPosts();
+    // Limpiar la suscripción al desmontar el componente
+    return () => unsubscribe();
   }, []);
 
   useEffect(() => {
