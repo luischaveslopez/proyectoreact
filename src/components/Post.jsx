@@ -1,36 +1,103 @@
-import React, { useState } from "react";
-import { Col, Dropdown, Collapse, OverlayTrigger, Tooltip } from "react-bootstrap";
+import React, { useState, useEffect } from "react";
+import { Col, Dropdown, Collapse, Modal, Button, Form } from "react-bootstrap";
 import { Link } from "react-router-dom";
+import { getAuth } from "firebase/auth";
+import { doc, updateDoc, deleteDoc, getDoc, addDoc, collection, Timestamp } from "firebase/firestore";
+import { db } from "../config/firebase"; 
+import Swal from 'sweetalert2';
 
 const Post = ({
-  user = {}, // Valor predeterminado para evitar que sea undefined
+  postId,
+  user = {},
   postText,
   hashtags = [],
   selectedItemImage,
   selectedItemInfo,
-  previewUrl, // Añadir la URL de la previa
-  createdAt, // Marca de tiempo
-  likes = 0,
+  selectedItemType,
+  createdAt,
   comments = 0,
   shares = 0,
-  likedBy = [],
-  onLike,
-  onComment,
-  onShare,
+  onPostClick,
 }) => {
   const [open, setOpen] = useState(false);
-  const [modalShow, setModalShow] = useState(false);
+  const [starRating, setStarRating] = useState(0);
+  const [hoverRating, setHoverRating] = useState(0);
+  const [averageRating, setAverageRating] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [audio, setAudio] = useState(null);
+  const [previewUrl, setPreviewUrl] = useState(null);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [editedText, setEditedText] = useState(postText);
+  const [isOwner, setIsOwner] = useState(false);
+  const [newComment, setNewComment] = useState("");
+  const [commentsList, setCommentsList] = useState([]);
+  const [showCommentsModal, setShowCommentsModal] = useState(false);
 
-  const handleImageClick = () => {
+  const auth = getAuth();
+  const currentUser = auth.currentUser;
+
+  useEffect(() => {
+    const fetchPostData = async () => {
+      const postDoc = await getDoc(doc(db, "posts", postId));
+      if (postDoc.exists()) {
+        const postData = postDoc.data();
+        const ratings = postData.ratings || {};
+        if (currentUser?.uid in ratings) {
+          setStarRating(ratings[currentUser.uid]);
+        }
+        setAverageRating(postData.averageRating || 0);
+        setPreviewUrl(postData.previewUrl || null);
+        setCommentsList(postData.comments || []);
+        setIsOwner(currentUser?.uid === postData.user.uid);
+      }
+    };
+
+    fetchPostData();
+  }, [postId, currentUser]);
+
+  const handleRating = async (rating) => {
+    if (!currentUser) {
+      console.error("Debes iniciar sesión para calificar.");
+      return;
+    }
+
+    const postDocRef = doc(db, "posts", postId);
+    const postDoc = await getDoc(postDocRef);
+
+    if (postDoc.exists()) {
+      const postData = postDoc.data();
+      const ratings = postData.ratings || {};
+
+      ratings[currentUser.uid] = rating;
+
+      const totalRatings = Object.values(ratings).reduce((a, b) => a + b, 0);
+      const newAverageRating = totalRatings / Object.keys(ratings).length;
+
+      await updateDoc(postDocRef, {
+        ratings,
+        averageRating: newAverageRating,
+      });
+
+      setStarRating(rating);
+      setAverageRating(newAverageRating);
+    }
+  };
+
+  const handleMouseEnter = (rating) => {
+    setHoverRating(rating);
+  };
+
+  const handleMouseLeave = () => {
+    setHoverRating(0);
+  };
+
+  const handleItemClick = () => {
     if (audio) {
       audio.pause();
       setIsPlaying(false);
       setAudio(null);
-    }
-
-    if (previewUrl) {
+    } else if (previewUrl) {
       const newAudio = new Audio(previewUrl);
       newAudio.play();
       setAudio(newAudio);
@@ -45,187 +112,201 @@ const Post = ({
     }
   };
 
+  const handleEditPost = async () => {
+    try {
+      const postDocRef = doc(db, "posts", postId);
+      await updateDoc(postDocRef, {
+        postText: editedText,
+      });
+      setShowEditModal(false);
+      Swal.fire({
+        icon: 'success',
+        title: 'Post updated',
+        text: 'Your post has been successfully updated!',
+        timer: 2000,
+        showConfirmButton: false,
+      });
+    } catch (error) {
+      console.error("Error updating post:", error);
+    }
+  };
+
+  const handleDeletePost = async () => {
+    try {
+      const postDocRef = doc(db, "posts", postId);
+      await deleteDoc(postDocRef);
+      setShowDeleteModal(false);
+      Swal.fire({
+        icon: 'success',
+        title: 'Post deleted',
+        text: 'Your post has been successfully deleted!',
+        timer: 2000,
+        showConfirmButton: false,
+      });
+      // Aquí puedes agregar una función para actualizar la lista de posts si es necesario
+    } catch (error) {
+      console.error("Error deleting post:", error);
+    }
+  };
+
+  const handleAddComment = async (e) => {
+    e.preventDefault();
+    if (!newComment.trim()) return;
+
+    const commentData = {
+      user: {
+        uid: currentUser.uid,
+        username: currentUser.displayName || "Anonymous",
+        profilePic: currentUser.photoURL || "defaultUserImage",
+      },
+      text: newComment,
+      createdAt: Timestamp.now(),
+    };
+
+    try {
+      const postDocRef = doc(db, "posts", postId);
+      const postDoc = await getDoc(postDocRef);
+
+      if (postDoc.exists()) {
+        const postData = postDoc.data();
+        const updatedComments = [...(postData.comments || []), commentData];
+
+        await updateDoc(postDocRef, {
+          comments: updatedComments,
+        });
+
+        setCommentsList(updatedComments);
+        setNewComment("");
+      }
+    } catch (error) {
+      console.error("Error adding comment:", error);
+    }
+  };
+
   return (
-    <Col sm={12} className="special-post">
-      <div className="card card-block card-stretch card-height">
-        <div className="card-body">
-          <div className="user-post-data">
-            <div className="d-flex justify-content-between align-items-center">
-              <div className="me-3 flex-shrink-0">
-                <img
-                  className="border border-2 rounded-circle user-post-profile"
-                  src={user?.profilePic || "defaultUserImage"}
-                  alt={user?.username || "User"}
-                  style={{ width: "50px", height: "50px" }} // Ajusta el tamaño de la imagen
-                />
-              </div>
-              <div className="w-100">
-                <div className="d-flex align-items-center justify-content-between">
-                  <div>
-                    <h6 className="mb-0 d-inline-block">
-                      {user?.username || "User"}
-                    </h6>{" "}
-                    <p className="mb-0 d-inline-block text-capitalize fw-medium">
-                      Shared This Post
-                    </p>
-                    <p className="mb-0">{new Date(createdAt?.seconds * 1000).toLocaleString()}</p>
-                  </div>
-                  <div className="card-post-toolbar">
-                    <Dropdown>
-                      <Dropdown.Toggle
-                        variant="lh-1"
-                        id="post-option"
-                        as="span"
-                        bsPrefix=" "
-                      >
-                        <span className="material-symbols-outlined">more_horiz</span>
-                      </Dropdown.Toggle>
-                      <Dropdown.Menu className="dropdown-menu m-0 p-0">
-                        <Dropdown.Item className="p-3">
-                          <div className="d-flex align-items-top">
-                            <span className="material-symbols-outlined">save</span>
-                            <div className="data ms-2">
-                              <h6>Save Post</h6>
-                              <p className="mb-0">Add this to your saved items</p>
-                            </div>
-                          </div>
-                        </Dropdown.Item>
-                        <Dropdown.Item className="p-3">
-                          <div className="d-flex align-items-top">
-                            <span className="material-symbols-outlined">cancel</span>
-                            <div className="data ms-2">
-                              <h6>Hide Post</h6>
-                              <p className="mb-0">See fewer posts like this.</p>
-                            </div>
-                          </div>
-                        </Dropdown.Item>
-                        <Dropdown.Item className="p-3">
-                          <div className="d-flex align-items-top">
-                            <span className="material-symbols-outlined">person_remove</span>
-                            <div className="data ms-2">
-                              <h6>Unfollow User</h6>
-                              <p className="mb-0">Stop seeing posts but stay friends.</p>
-                            </div>
-                          </div>
-                        </Dropdown.Item>
-                        <Dropdown.Item className="p-3">
-                          <div className="d-flex align-items-top">
-                            <span className="material-symbols-outlined">notifications</span>
-                            <div className="data ms-2">
-                              <h6>Notifications</h6>
-                              <p className="mb-0">Turn on notifications for this post</p>
-                            </div>
-                          </div>
-                        </Dropdown.Item>
-                      </Dropdown.Menu>
-                    </Dropdown>
-                  </div>
+    <>
+      <Col sm={12} className="special-post" onClick={() => onPostClick(postId)}>
+        <div className="card card-block card-stretch card-height">
+          <div className="card-body">
+            <div className="user-post-data">
+              <div className="d-flex justify-content-between align-items-center">
+                <div className="me-3 flex-shrink-0">
+                  <img
+                    className="border border-2 rounded-circle user-post-profile"
+                    src={user?.profilePic || "defaultUserImage"}
+                    alt={user?.username || "User"}
+                    style={{ width: "50px", height: "50px" }} 
+                  />
                 </div>
-              </div>
-            </div>
-          </div>
-          <div className="mt-4">
-            <p className="mb-0">{postText}</p>
-            <ul className="list-inline m-0 p-0 d-flex flex-wrap gap-1">
-              {hashtags.map((hashtag, index) => (
-                <li key={index}>
-                  <Link to="#" style={{ cursor: "pointer" }}>
-                    #{hashtag}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
-          {selectedItemImage && selectedItemInfo && (
-            <div className="user-post mt-4">
-              <div className="p-3 rounded-3 bg-light-subtle">
-                <div className="d-flex gap-3">
-                  <div className="flex-shrink-0" onClick={handleImageClick} style={{ cursor: "pointer" }}>
-                    <img
-                      src={selectedItemImage}
-                      alt={selectedItemInfo.name}
-                      className="img-fluid"
-                      style={{ width: "100px", height: "100px", objectFit: "contain" }} // Ajuste del tamaño de la imagen
-                    />
-                    {isPlaying && (
-                      <div className="bars-animation ms-2">
-                        <span></span>
-                        <span></span>
-                        <span></span>
-                        <span></span>
+                <div className="w-100">
+                  <div className="d-flex align-items-center justify-content-between">
+                    <div>
+                      <h6 className="mb-0 d-inline-block">
+                        {user?.username || "User"}
+                      </h6>{" "}
+                      <p className="mb-0 d-inline-block text-capitalize fw-medium">
+                        Shared This Post
+                      </p>
+                      <p className="mb-0">{new Date(createdAt?.seconds * 1000).toLocaleString()}</p>
+                    </div>
+                    {isOwner && (
+                      <div className="card-post-toolbar">
+                        <Dropdown>
+                          <Dropdown.Toggle
+                            variant="lh-1"
+                            id="post-option"
+                            as="span"
+                            bsPrefix=" "
+                          >
+                            <span className="material-symbols-outlined">more_horiz</span>
+                          </Dropdown.Toggle>
+                          <Dropdown.Menu className="dropdown-menu m-0 p-0">
+                            <Dropdown.Item className="p-3" onClick={() => setShowEditModal(true)}>
+                              <div className="d-flex align-items-top">
+                                <span className="material-symbols-outlined">edit</span>
+                                <div className="data ms-2">
+                                  <h6>Edit Post</h6>
+                                  <p className="mb-0">Edit the text of this post</p>
+                                </div>
+                              </div>
+                            </Dropdown.Item>
+                            <Dropdown.Item className="p-3" onClick={() => setShowDeleteModal(true)}>
+                              <div className="d-flex align-items-top">
+                                <span className="material-symbols-outlined">delete</span>
+                                <div className="data ms-2">
+                                  <h6>Delete Post</h6>
+                                  <p className="mb-0">Permanently remove this post</p>
+                                </div>
+                              </div>
+                            </Dropdown.Item>
+                          </Dropdown.Menu>
+                        </Dropdown>
                       </div>
                     )}
                   </div>
-                  <div>
-                    <h5 className="mb-2">{selectedItemInfo.name}</h5>
-                    <p className="m-0 text-body font-size-12 fw-medium">
-                      {selectedItemInfo.description}
-                    </p>
-                    {selectedItemInfo.album && <p>Album: {selectedItemInfo.album}</p>}
-                    {selectedItemInfo.popularity && <p>Popularity: {selectedItemInfo.popularity}</p>}
-                    {selectedItemInfo.owner && <p>Owner: {selectedItemInfo.owner}</p>}
-                  </div>
                 </div>
               </div>
             </div>
-          )}
-          <div className="post-meta-likes mt-4">
-            <div className="d-flex align-items-center gap-2 flex-wrap">
-              <ul className="list-inline m-0 p-0 post-user-liked-list">
-                {likedBy.map((user, index) => (
+            <div className="mt-4">
+              <p className="mb-0">{postText}</p>
+              <ul className="list-inline m-0 p-0 d-flex flex-wrap gap-1">
+                {hashtags.map((hashtag, index) => (
                   <li key={index}>
-                    <img
-                      src={user.profilePic}
-                      alt={user.name}
-                      className="rounded-circle img-fluid userimg"
-                      loading="lazy"
-                      style={{ width: "30px", height: "30px" }} // Ajuste del tamaño de la imagen de los usuarios que dieron like
-                    />
+                    <Link to="#" style={{ cursor: "pointer" }}>
+                      #{hashtag}
+                    </Link>
                   </li>
                 ))}
               </ul>
-              <div className="d-inline-flex align-items-center gap-1">
-                <h6 className="m-0 font-size-14">{user.username}</h6>
-                <span
-                  className="text-capitalize font-size-14 fw-medium"
-                  type="button"
-                  data-bs-toggle="modal"
-                  data-bs-target="#likemodal"
-                >
-                  and {likes} others liked this
-                </span>
-              </div>
             </div>
-          </div>
-          <div className="comment-area mt-4 pt-4 border-top">
-            <div className="d-flex justify-content-between align-items-center flex-wrap">
-              <div className="like-block position-relative d-flex align-items-center flex-shrink-0">
-                <div className="like-data">
-                  <div className="dropdown">
-                    <span
-                      className="dropdown-toggle"
-                      data-bs-toggle="dropdown"
-                      aria-haspopup="true"
-                      aria-expanded="false"
-                      role="button"
-                    >
-                      <span className="material-symbols-outlined align-text-top font-size-20">
-                        thumb_up
-                      </span>{" "}
-                      <span className="fw-medium">{likes} Likes</span>
-                    </span>
-                    <div className="dropdown-menu py-2 shadow">
-                      <OverlayTrigger
-                        placement="top"
-                        overlay={<Tooltip>Like</Tooltip>}
-                        className="ms-2 me-2"
-                      >
-                        <img src="icon1.png" className="img-fluid me-2" alt="" />
-                      </OverlayTrigger>
-                      {/* More icons */}
+            {selectedItemImage && selectedItemInfo && (
+              <div className="user-post mt-4">
+                <div
+                  className="p-3 rounded-3 bg-light-subtle"
+                  style={{ cursor: "pointer" }}
+                  onClick={handleItemClick}
+                >
+                  <div className="d-flex gap-3">
+                    <div className="flex-shrink-0">
+                      <img
+                        src={selectedItemImage}
+                        alt={selectedItemInfo.name}
+                        className="img-fluid"
+                        style={{ width: "100px", height: "100px", objectFit: "contain" }} 
+                      />
+                      {isPlaying && (
+                        <div className="bars-animation ms-2">
+                          <span></span>
+                          <span></span>
+                          <span></span>
+                          <span></span>
+                        </div>
+                      )}
+                    </div>
+                    <div>
+                      <h5 className="mb-2">{selectedItemInfo.name}</h5>
+                      <p className="m-0 text-body font-size-12 fw-medium">
+                        {selectedItemInfo.description}
+                      </p>
                     </div>
                   </div>
                 </div>
+              </div>
+            )}
+            <div className="post-meta-likes mt-4 d-flex align-items-center justify-content-between">
+              <div className="d-flex align-items-center gap-2">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <span
+                    key={star}
+                    className={`material-symbols-outlined cursor-pointer ${star <= (hoverRating || starRating) ? "text-warning" : "text-muted"}`}
+                    onClick={() => handleRating(star)}
+                    onMouseEnter={() => handleMouseEnter(star)}
+                    onMouseLeave={handleMouseLeave}
+                  >
+                    star
+                  </span>
+                ))}
+                <span className="ms-2">Promedio: {averageRating.toFixed(1)}</span>
               </div>
               <div className="d-flex align-items-center gap-3 flex-shrink-0">
                 <div
@@ -238,16 +319,13 @@ const Post = ({
                   <span className="material-symbols-outlined align-text-top font-size-20">
                     comment
                   </span>{" "}
-                  <span className="fw-medium">{comments} Comments</span>
+                  <span className="fw-medium">{commentsList.length} Comments</span>
                 </div>
-
                 <div className="share-block d-flex align-items-center feather-icon">
                   <Link
                     to="#"
                     data-bs-toggle="modal"
                     data-bs-target="#share-btn"
-                    onClick={() => setModalShow(true)}
-                    aria-controls="share-btn"
                     className="d-flex align-items-center"
                   >
                     <span className="material-symbols-outlined align-text-top font-size-20">
@@ -256,37 +334,63 @@ const Post = ({
                     <span className="ms-1 fw-medium">{shares} Shares</span>
                   </Link>
                 </div>
-                {/* Share Modal Component */}
               </div>
             </div>
-
             <Collapse in={open}>
               <div id="commentcollapes" className="border-top mt-4 pt-4">
                 <ul className="list-inline m-o p-0 comment-list">
-                  {/* Map through comments */}
+                  {commentsList.slice(0, 2).map((comment, index) => (
+                    <li key={index} className="d-flex gap-3 mb-3">
+                      <div className="flex-shrink-0">
+                        <img
+                          src={comment.user.profilePic}
+                          alt={comment.user.username}
+                          className="avatar-48 rounded-circle img-fluid"
+                          loading="lazy"
+                        />
+                      </div>
+                      <div>
+                        <h6 className="mb-0">{comment.user.username}</h6>
+                        <p className="text-body">{comment.text}</p>
+                        <small className="text-muted">
+                          {new Date(comment.createdAt.seconds * 1000).toLocaleString()}
+                        </small>
+                      </div>
+                    </li>
+                  ))}
+                  {commentsList.length > 2 && (
+                    <Button
+                      variant="link"
+                      onClick={() => setShowCommentsModal(true)}
+                    >
+                      View all comments
+                    </Button>
+                  )}
                 </ul>
-                <div className="add-comment-form-block">
+                <div className="add-comment-form-block mt-4">
                   <div className="d-flex align-items-center gap-3">
                     <div className="flex-shrink-0">
                       <img
-                        src="user1.png"
-                        alt="userimg"
+                        src={currentUser?.photoURL || "defaultUserImage"}
+                        alt={currentUser?.displayName || "User"}
                         className="avatar-48 rounded-circle img-fluid"
                         loading="lazy"
                       />
                     </div>
-                    <div className="add-comment-form">
-                      <form>
+                    <div className="add-comment-form w-100">
+                      <form onSubmit={handleAddComment}>
                         <input
                           type="text"
                           className="form-control"
                           placeholder="Write a Comment..."
+                          value={newComment}
+                          onChange={(e) => setNewComment(e.target.value)}
                         />
                         <button
                           type="submit"
-                          className="btn btn-primary font-size-12 text-capitalize px-5"
+                          className="btn btn-primary font-size-12 text-capitalize px-5 mt-2"
                         >
-                          post
+                          Post
                         </button>
                       </form>
                     </div>
@@ -296,7 +400,88 @@ const Post = ({
             </Collapse>
           </div>
         </div>
-      </div>
+      </Col>
+
+      {/* Modal para editar post */}
+      <Modal show={showEditModal} onHide={() => setShowEditModal(false)}>
+        <Modal.Header closeButton>
+          <Modal.Title>Edit Post</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <Form>
+            <Form.Group controlId="formEditPostText">
+              <Form.Label>Edit your post text</Form.Label>
+              <Form.Control
+                as="textarea"
+                rows={3}
+                value={editedText}
+                onChange={(e) => setEditedText(e.target.value)}
+              />
+            </Form.Group>
+          </Form>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={() => setShowEditModal(false)}>
+            Cancel
+          </Button>
+          <Button variant="primary" onClick={handleEditPost}>
+            Save Changes
+          </Button>
+        </Modal.Footer>
+      </Modal>
+
+      {/* Modal para eliminar post */}
+      <Modal show={showDeleteModal} onHide={() => setShowDeleteModal(false)}>
+        <Modal.Header closeButton>
+          <Modal.Title>Delete Post</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          Are you sure you want to delete this post? This action cannot be undone.
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={() => setShowDeleteModal(false)}>
+            Cancel
+          </Button>
+          <Button variant="danger" onClick={handleDeletePost}>
+            Delete
+          </Button>
+        </Modal.Footer>
+      </Modal>
+
+      {/* Modal para ver todos los comentarios */}
+      <Modal show={showCommentsModal} onHide={() => setShowCommentsModal(false)}>
+        <Modal.Header closeButton>
+          <Modal.Title>All Comments</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <ul className="list-inline m-o p-0 comment-list">
+            {commentsList.map((comment, index) => (
+              <li key={index} className="d-flex gap-3 mb-3">
+                <div className="flex-shrink-0">
+                  <img
+                    src={comment.user.profilePic}
+                    alt={comment.user.username}
+                    className="avatar-48 rounded-circle img-fluid"
+                    loading="lazy"
+                  />
+                </div>
+                <div>
+                  <h6 className="mb-0">{comment.user.username}</h6>
+                  <p className="text-body">{comment.text}</p>
+                  <small className="text-muted">
+                    {new Date(comment.createdAt.seconds * 1000).toLocaleString()}
+                  </small>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={() => setShowCommentsModal(false)}>
+            Close
+          </Button>
+        </Modal.Footer>
+      </Modal>
 
       <style jsx>{`
         .bars-animation {
@@ -348,8 +533,17 @@ const Post = ({
             transform: scaleY(1);
           }
         }
+
+        .material-symbols-outlined.cursor-pointer {
+          cursor: pointer;
+          transition: color 0.2s ease-in-out;
+        }
+
+        .material-symbols-outlined.text-warning {
+          color: #ffc107;
+        }
       `}</style>
-    </Col>
+    </>
   );
 };
 

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Button, Modal, Spinner } from "react-bootstrap";
 import { getAuth } from "firebase/auth";
-import { doc, getDoc, collection, addDoc, Timestamp } from "firebase/firestore";
+import { doc, getDoc, collection, addDoc, Timestamp, updateDoc } from "firebase/firestore";
 import { db } from "../config/firebase";
 
 // Images
@@ -18,6 +18,7 @@ const CreatePost = () => {
   const [playingTrackId, setPlayingTrackId] = useState(null);
   const [selectedItemImage, setSelectedItemImage] = useState(null);
   const [selectedItemInfo, setSelectedItemInfo] = useState(null);
+  const [previewUrl, setPreviewUrl] = useState(null); // Estado para la preview URL
   const [loading, setLoading] = useState(false);
   const [postSuccess, setPostSuccess] = useState(false);
 
@@ -30,6 +31,7 @@ const CreatePost = () => {
   const handleRemoveSelectedItem = () => {
     setSelectedItemImage(null);
     setSelectedItemInfo(null);
+    setPreviewUrl(null); // Limpiar la preview URL
     setPlayingTrackId(null);
     if (currentPreview) {
       currentPreview.pause();
@@ -46,7 +48,7 @@ const CreatePost = () => {
     setLoading(true);
     try {
       const postCollection = collection(db, "posts");
-      await addDoc(postCollection, {
+      const postRef = await addDoc(postCollection, {
         user: {
           uid: userData.uid,
           username: userData.username,
@@ -55,8 +57,17 @@ const CreatePost = () => {
         postText,
         selectedItemImage,
         selectedItemInfo,
+        previewUrl, // Almacenar la preview URL en el documento
         createdAt: Timestamp.now(),
       });
+
+      const postId = postRef.id;
+
+      // Actualiza el documento con su propio ID usando updateDoc
+      await updateDoc(postRef, { postId });
+
+      console.log("Post creado con ID: ", postId);
+
       setLoading(false);
       setPostSuccess(true);
 
@@ -198,6 +209,7 @@ const CreatePost = () => {
         setPlayingTrackId(id);
         setSelectedItemImage(imageUrl);
         setSelectedItemInfo(itemInfo);
+        setPreviewUrl(previewUrl); // Almacena la preview URL en el estado
 
         audio.onended = () => {
           setPlayingTrackId(null);

@@ -1,16 +1,12 @@
 import React, { useEffect, useState } from "react";
-import {
-  Row,
-  Col,
-  Container,
-} from "react-bootstrap";
+import { Row, Col, Container } from "react-bootstrap";
 import { collection, getDocs } from "firebase/firestore"; 
 import { db } from "../../config/firebase"; 
 import Card from "../../components/Card";
 import CreatePost from "../../components/create-post";
 import Post from "../../components/Post"; // Importa el componente Post
 
-//image
+// Imágenes
 import user14 from "../../assets/images/user/06.jpg";
 import user15 from "../../assets/images/user/07.jpg";
 import user16 from "../../assets/images/user/08.jpg";
@@ -42,7 +38,10 @@ const Index = () => {
     const fetchPosts = async () => {
       const postsCollection = collection(db, "posts");
       const postsSnapshot = await getDocs(postsCollection);
-      const postsList = postsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      const postsList = postsSnapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
       setPosts(postsList);
     };
 
@@ -51,17 +50,17 @@ const Index = () => {
 
   useEffect(() => {
     function handleScroll() {
-      if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight) {
+      if (window.innerHeight + window.scrollY >= document.body.offsetHeight) {
         setTimeout(() => {
           setLoadContent(false);
         }, 2000);
       }
     }
 
-    window.addEventListener('scroll', handleScroll);
+    window.addEventListener("scroll", handleScroll);
 
     return () => {
-      window.removeEventListener('scroll', handleScroll);
+      window.removeEventListener("scroll", handleScroll);
     };
   }, []);
 
@@ -71,6 +70,11 @@ const Index = () => {
       slide: number,
     });
   }
+
+  // Manejador de clics para los posts
+  const handlePostClick = (postId) => {
+    console.log("Post ID:", postId);
+  };
 
   return (
     <>
@@ -90,17 +94,20 @@ const Index = () => {
                   </Col>
                 </Row>
                 <Row className="special-post-container">
-                  {/* Aquí van los post */}
+                  {/* Aquí van los posts */}
                   {posts.map((post) => (
                     <Post
                       key={post.id}
+                      postId={post.id}  // Pasar el ID del post
                       user={post.user}
                       postText={post.postText}
                       selectedItemImage={post.selectedItemImage}
                       selectedItemInfo={post.selectedItemInfo}
-                      likes={post.likes || 0}
+                      selectedItemType={post.selectedItemType}
+                      createdAt={post.createdAt}
                       comments={post.comments || 0}
                       shares={post.shares || 0}
+                      onPostClick={handlePostClick}  // Pasar la función de clic
                     />
                   ))}
 
@@ -133,7 +140,6 @@ const Index = () => {
                             />
                             <div>
                               <h5>David Arce</h5>
-                              <div className="d-flex align-items-center justify-content-between gap-2"></div>
                               <small className="text-capitalize">
                                 Followed by Jhon J + 2 more
                               </small>
@@ -195,9 +201,7 @@ const Index = () => {
                               className="avatar-60 avatar-borderd object-cover avatar-rounded img-fluid d-inline-block"
                             />
                             <div>
-                              <div className="d-flex align-items-center justify-content-between gap-2">
-                                <h5>Luis Chaves</h5>
-                              </div>
+                              <h5>Luis Chaves</h5>
                               <small className="text-capitalize">
                                 Followed by Messi + 2 more
                               </small>
