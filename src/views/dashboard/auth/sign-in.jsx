@@ -11,6 +11,8 @@ import * as SettingSelector from "../../../store/setting/selectors";
 import { useSelector } from "react-redux";
 import { auth, db } from "../../../config/firebase";
 
+
+
 SwiperCore.use([Navigation, Autoplay]);
 
 const SignIn = () => {
@@ -20,6 +22,7 @@ const SignIn = () => {
   const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [userRole, setUserRole ] = useState(null);
 
   useEffect(() => {
     const rememberedEmail = localStorage.getItem("rememberMeEmail");
@@ -70,7 +73,13 @@ const SignIn = () => {
         title: 'Sign In Successful',
         text: 'Welcome back to Jammify!',
       }).then(() => {
-        navigate("/");
+        if(email === 'admin@gmail.com'){
+        setUserRole('admin');
+        navigate("/admin/dashboard");
+      } else{
+        setUserRole('user');
+        navigate('/')
+      }
       });
     } catch (error) {
       Swal.fire({
@@ -82,6 +91,9 @@ const SignIn = () => {
     } finally {
       setLoading(false);
     }
+    
+
+    
   };
 
   const handleSpotifySignIn = () => {
