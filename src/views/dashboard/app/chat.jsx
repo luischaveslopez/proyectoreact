@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+//import { Link } from "react-router-dom";
 import { Form, Tab, Nav, Button, Dropdown } from "react-bootstrap";
-import { Swiper, SwiperSlide } from "swiper/react";
+//import { Swiper, SwiperSlide } from "swiper/react";
 //img
 import user1 from "../../../assets/images/chat/avatar/01.png";
 import user2 from "../../../assets/images/chat/avatar/02.png";
+import user9 from "../../../assets/images/chat/avatar/09.png";
 import user10 from "../../../assets/images/chat/avatar/10.png";
 
 
@@ -53,6 +54,7 @@ const Chat = () => {
               onClick={minisidebar}
             ></div>
             <div className="chat-searchbar mt-3 pt-1 mb-4">
+              {" "}
               {/*Search bar dentro del chateo */}
               <Form.Group className="form-group chat-search-data m-0">
                 <input
@@ -64,7 +66,7 @@ const Chat = () => {
                 <i className="material-symbols-outlined">search</i>
               </Form.Group>
             </div>
-          </div>
+          </div>{" "}
           {/*END */}
 
           

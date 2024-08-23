@@ -30,7 +30,7 @@ const Footer = (props) => {
                                 <li className="list-inline-item ms-3 ms-md-5"><Link to="/dashboard/extrapages/terms-of-service">Terms of Use</Link></li>
                             </ul>
                         </Col>
-                        <Col lg="6" className="d-flex justify-content-end">
+                        <Col lg="6" className="d-flex justify-content-start">
                             Copyright 2024 <Link to="/" className='mx-1'>Jammify</Link>Todos los derechos reservados.
                         </Col>
                     </Row>
