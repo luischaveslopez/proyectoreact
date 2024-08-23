@@ -11,7 +11,7 @@ import {
   Collapse,
 } from "react-bootstrap";
 import { getAuth } from "firebase/auth";
-import { doc, getDoc, collection, query, where, getDocs, orderBy} from "firebase/firestore"; // Importar las funciones correctamente
+import { doc, getDoc, collection, query, where, getDocs, orderBy, onSnapshot} from "firebase/firestore"; // Importar las funciones correctamente
 import { db } from '../../../config/firebase'; // Asegúrate de que la ruta sea correcta
 import Card from "../../../components/Card";
 import CreatePost from "../../../components/create-post";
@@ -120,31 +120,29 @@ const UserProfile = () => {
   const auth = getAuth();
   const user = auth.currentUser;
 
+  const fetchUserPosts = (uid) => {
+    const q = query(collection(db, "posts"), where("user.uid", "==", uid));
+
+    const unsubscribe = onSnapshot(q, (querySnapshot) => {
+      const fetchedPosts = [];
+      querySnapshot.forEach((doc) => {
+        fetchedPosts.push({ id: doc.id, ...doc.data() });
+      });
+
+      const sortedPosts = fetchedPosts.sort(
+        (a, b) => b.createdAt.seconds - a.createdAt.seconds
+      );
+      setUserPosts(sortedPosts);
+    });
+
+    return () => unsubscribe();
+  };
+
   useEffect(() => {
-    const fetchUserPosts = async () => {
-      if (user) {
-        try {
-          // Obtén los posts filtrados por el usuario
-          const q = query(collection(db, "posts"), where("user.uid", "==", user.uid));
-          const querySnapshot = await getDocs(q);
-          const fetchedPosts = [];
-    
-          querySnapshot.forEach((doc) => {
-            fetchedPosts.push({ id: doc.id, ...doc.data() });
-          });
-    
-          // Ordenar los posts manualmente por la fecha de creación
-          const sortedPosts = fetchedPosts.sort((a, b) => b.createdAt.seconds - a.createdAt.seconds);
-          setUserPosts(sortedPosts);
-        } catch (error) {
-          console.error("Error fetching user posts:", error);
-        }
-      }
-    };
-    
-  
-  
-    fetchUserPosts();
+    if (user) {
+      const unsubscribe = fetchUserPosts(user.uid);
+      return () => unsubscribe(); // Cleanup on component unmount
+    }
   }, [user]);
   
 
