@@ -23,7 +23,8 @@ const UserProfileEdit = () => {
         websiteLink: '',
         tiktokLink: '',
         instagramLink: '',
-        spotifyLink: ''
+        spotifyLink: '',
+        spotifyId: '' // Añadimos spotifyId para identificar si está registrado con Spotify
     });
 
     const [passwords, setPasswords] = useState({
@@ -62,7 +63,8 @@ const UserProfileEdit = () => {
                             websiteLink: data.websiteLink || '',
                             tiktokLink: data.tiktokLink || '',
                             instagramLink: data.instagramLink || '',
-                            spotifyLink: data.spotifyLink || ''
+                            spotifyLink: data.spotifyLink || '',
+                            spotifyId: data.spotifyId || '' // Asignamos el spotifyId si existe
                         }));
                     } else {
                         setUserData(prevState => ({
@@ -162,8 +164,20 @@ const UserProfileEdit = () => {
         return null;
     };
 
-    const handleSubmit = async (e) => {
+    const handleSubmitPersonalInfo = async (e) => {
         e.preventDefault();
+
+        // Verifica si los campos requeridos están completos
+        const { firstName, lastName, username, gender, dob, country, aboutMe } = userData;
+        if (!firstName || !lastName || !username || !gender || !dob || !country || !aboutMe) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Incomplete Form',
+                text: 'Please fill out all required fields in Personal Information.',
+            });
+            return;
+        }
+
         if (user) {
             try {
                 let profilePicURL = userData.profilePic;
@@ -183,7 +197,7 @@ const UserProfileEdit = () => {
                 Swal.fire({
                     icon: 'success',
                     title: 'Profile Updated',
-                    text: 'Your profile has been updated successfully!',
+                    text: 'Your personal information has been updated successfully!',
                 });
             } catch (error) {
                 console.error("Error updating profile: ", error);
@@ -197,8 +211,67 @@ const UserProfileEdit = () => {
         }
     };
 
+    const handleSubmitSocialMedia = async (e) => {
+        e.preventDefault();
+
+        const { websiteLink, tiktokLink, instagramLink, spotifyLink } = userData;
+
+        // Verifica que los campos de redes sociales no estén vacíos
+        if (!websiteLink || !tiktokLink || !instagramLink || !spotifyLink) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Incomplete Form',
+                text: 'Please fill out all required fields in Social Media.',
+            });
+            return;
+        }
+
+        if (user) {
+            try {
+                await setDoc(doc(db, "users", user.uid), {
+                    websiteLink,
+                    tiktokLink,
+                    instagramLink,
+                    spotifyLink,
+                    uid: user.uid,
+                }, { merge: true });
+
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Social Media Updated',
+                    text: 'Your social media links have been updated successfully!',
+                });
+            } catch (error) {
+                console.error("Error updating social media: ", error);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'There was an error updating your social media links.',
+                });
+            }
+        }
+    };
+
     const handlePasswordSubmit = async (e) => {
         e.preventDefault();
+        if (userData.spotifyId) {
+            Swal.fire({
+                icon: 'info',
+                title: 'Logged in with Spotify',
+                text: 'You are logged in with Spotify, you cannot change your password.',
+            });
+            return;
+        }
+
+        if (!passwords.currentPassword || !passwords.newPassword || !passwords.verifyPassword) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Incomplete Form',
+                text: 'Please fill out all password fields.',
+            });
+            return;
+        }
+
         if (passwords.newPassword !== passwords.verifyPassword) {
             Swal.fire({
                 icon: 'warning',
@@ -207,6 +280,7 @@ const UserProfileEdit = () => {
             });
             return;
         }
+
         if (user) {
             const credential = EmailAuthProvider.credential(
                 user.email,
@@ -279,7 +353,7 @@ const UserProfileEdit = () => {
                                                 </div>
                                             </Card.Header>
                                             <Card.Body>
-                                                <Form onSubmit={handleSubmit}>
+                                                <Form onSubmit={handleSubmitPersonalInfo}>
                                                     <Form.Group className="form-group align-items-center">
                                                         <Col md="12">
                                                             <div className="profile-img-edit">
@@ -471,7 +545,7 @@ const UserProfileEdit = () => {
                                                 </div>
                                             </Card.Header>
                                             <Card.Body>
-                                                <Form onSubmit={handleSubmit}>
+                                                <Form onSubmit={handleSubmitSocialMedia}>
                                                     <Form.Group className="form-group">
                                                         <Form.Label htmlFor="websiteLink" className="form-label">Website link:</Form.Label>
                                                         <Form.Control

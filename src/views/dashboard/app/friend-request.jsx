@@ -7,6 +7,16 @@ import { Link } from "react-router-dom";
 import user5 from "../../../assets/images/user/05.jpg";
 import user6 from "../../../assets/images/user/06.jpg";
 import user7 from "../../../assets/images/user/07.jpg";
+import user8 from "../../../assets/images/user/08.jpg";
+import user9 from "../../../assets/images/user/09.jpg";
+import user10 from "../../../assets/images/user/10.jpg";
+import user11 from "../../../assets/images/user/11.jpg";
+import user12 from "../../../assets/images/user/12.jpg";
+import user13 from "../../../assets/images/user/13.jpg";
+import user14 from "../../../assets/images/user/14.jpg";
+import user15 from "../../../assets/images/user/15.jpg";
+import user16 from "../../../assets/images/user/16.jpg";
+import user17 from "../../../assets/images/user/17.jpg";
 //Sweet alert
 import Swal from "sweetalert2";
 
@@ -123,8 +133,6 @@ const FriendReqest = () => {
                         </Link>
                       </div>
                     </li>
-
-
                     <li className="d-flex align-items-center justify-content-between">
                       <div className="d-flex align-items-center">
                         <div className="user-img img-fluid flex-shrink-0">
@@ -167,8 +175,6 @@ const FriendReqest = () => {
                         </Link>
                       </div>
                     </li>
-
-
                     <li className="d-flex align-items-center justify-content-between">
                       <div className="d-flex align-items-center">
                         <div className="user-img img-fluid flex-shrink-0">
