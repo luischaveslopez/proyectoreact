@@ -661,20 +661,11 @@ const UserProfile = () => {
                                                 <i className="material-symbols-outlined me-2">
                                                   done
                                                 </i>
-                                                Friend
+                                                Follow
                                               </Dropdown.Toggle>
                                               <Dropdown.Menu className="dropdown-menu-right">
                                                 <Dropdown.Item href="#">
-                                                  Get Notification
-                                                </Dropdown.Item>
-                                                <Dropdown.Item href="#">
-                                                  Close Friend
-                                                </Dropdown.Item>
-                                                <Dropdown.Item href="#">
                                                   Unfollow
-                                                </Dropdown.Item>
-                                                <Dropdown.Item href="#">
-                                                  Unfriend
                                                 </Dropdown.Item>
                                                 <Dropdown.Item href="#">
                                                   Block
@@ -708,20 +699,11 @@ const UserProfile = () => {
                                                 <i className="material-symbols-outlined me-2">
                                                   done
                                                 </i>
-                                                Friend
+                                                Follow
                                               </Dropdown.Toggle>
                                               <Dropdown.Menu className="dropdown-menu-right">
                                                 <Dropdown.Item href="#">
-                                                  Get Notification
-                                                </Dropdown.Item>
-                                                <Dropdown.Item href="#">
-                                                  Close Friend
-                                                </Dropdown.Item>
-                                                <Dropdown.Item href="#">
                                                   Unfollow
-                                                </Dropdown.Item>
-                                                <Dropdown.Item href="#">
-                                                  Unfriend
                                                 </Dropdown.Item>
                                                 <Dropdown.Item href="#">
                                                   Block
@@ -756,20 +738,11 @@ const UserProfile = () => {
                                                 <i className="material-symbols-outlined me-2">
                                                   done
                                                 </i>
-                                                Friend
+                                                Follow
                                               </Dropdown.Toggle>
                                               <Dropdown.Menu className="dropdown-menu-right">
                                                 <Dropdown.Item href="#">
-                                                  Get Notification
-                                                </Dropdown.Item>
-                                                <Dropdown.Item href="#">
-                                                  Close Friend
-                                                </Dropdown.Item>
-                                                <Dropdown.Item href="#">
                                                   Unfollow
-                                                </Dropdown.Item>
-                                                <Dropdown.Item href="#">
-                                                  Unfriend
                                                 </Dropdown.Item>
                                                 <Dropdown.Item href="#">
                                                   Block
@@ -803,20 +776,11 @@ const UserProfile = () => {
                                                 <i className="material-symbols-outlined me-2">
                                                   done
                                                 </i>
-                                                Friend
+                                                Follow
                                               </Dropdown.Toggle>
                                               <Dropdown.Menu className="dropdown-menu-right">
                                                 <Dropdown.Item href="#">
-                                                  Get Notification
-                                                </Dropdown.Item>
-                                                <Dropdown.Item href="#">
-                                                  Close Friend
-                                                </Dropdown.Item>
-                                                <Dropdown.Item href="#">
                                                   Unfollow
-                                                </Dropdown.Item>
-                                                <Dropdown.Item href="#">
-                                                  Unfriend
                                                 </Dropdown.Item>
                                                 <Dropdown.Item href="#">
                                                   Block
@@ -827,11 +791,9 @@ const UserProfile = () => {
                                         </div>
                                       </div>
                                     </div>
-      
                                   </Row>
                                 </Card.Body>
                               </Tab.Pane>
-
                             </Tab.Content>
                           </div>
                         </Card.Body>

@@ -1,15 +1,16 @@
 import React, { useState, useEffect } from "react";
 import { Row, Col, Container } from "react-bootstrap";
-import { collection, query, where, onSnapshot, getDocs } from "firebase/firestore";
+import { collection, query, where, onSnapshot, getDocs, addDoc, doc, updateDoc } from "firebase/firestore";
 import { db } from '../../../config/firebase';
+import { getAuth } from 'firebase/auth'; // Importamos getAuth para obtener al usuario actual
+import Swal from 'sweetalert2';
 import Card from "../../../components/Card";
 import { Link, useParams } from "react-router-dom";
 import ReactFsLightbox from "fslightbox-react";
-import Post from "../../../components/Post"
+import Post from "../../../components/Post";
 
 // images
 import img1 from "../../../assets/images/page-img/fun.webp";
-// images
 import user1 from "../../../assets/images/user/11.png";
 import g1 from "../../../assets/images/page-img/g1.jpg";
 import g2 from "../../../assets/images/page-img/g2.jpg";
@@ -23,19 +24,21 @@ import g9 from "../../../assets/images/page-img/g9.jpg";
 
 
 // Fslightbox plugin
-const FsLightbox = ReactFsLightbox.default
-  ? ReactFsLightbox.default
-  : ReactFsLightbox;
+const FsLightbox = ReactFsLightbox.default ? ReactFsLightbox.default : ReactFsLightbox;
 
 const FriendProfile = () => {
-  const { uid } = useParams(); // Obtiene el username desde la URL
+  const { uid } = useParams(); // Obtiene el UID del amigo desde la URL
   const [userPosts, setUserPosts] = useState([]);
   const [userData, setUserData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [friendRequestStatus, setFriendRequestStatus] = useState(null); // Para controlar el estado de la solicitud
   const [imageController, setImageController] = useState({
     toggler: false,
     slide: 1,
   });
+
+  const auth = getAuth();
+  const currentUser = auth.currentUser; // Obtenemos al usuario autenticado
 
   // Función para obtener los datos del amigo
   useEffect(() => {
@@ -51,7 +54,7 @@ const FriendProfile = () => {
           // Ahora que tienes el uid del amigo, obtén sus posts
           fetchUserPosts(doc.data().uid); // Llamada para obtener los posts del amigo
         } else {
-          console.error("No user found with the username:", uid);
+          console.error("No user found with the UID:", uid);
         }
       } catch (error) {
         console.error("Error fetching user data: ", error);
@@ -63,43 +66,71 @@ const FriendProfile = () => {
     fetchUserData();
   }, [uid]);
 
-// Función para obtener los posts del amigo en tiempo real
-    const fetchUserPosts = (uid) => {
-      const q = query(collection(db, "posts"), where("user.uid", "==", uid));
+  // Función para obtener los posts del amigo en tiempo real
+  const fetchUserPosts = (uid) => {
+    const q = query(collection(db, "posts"), where("user.uid", "==", uid));
 
-      // Usamos onSnapshot para escuchar cambios en tiempo real
-      const unsubscribe = onSnapshot(q, (querySnapshot) => {
-        const fetchedPosts = [];
-        querySnapshot.forEach((doc) => {
-          fetchedPosts.push({ id: doc.id, ...doc.data() });
-        });
-
-        // Ordenar los posts por fecha de creación (de más reciente a más antiguo)
-        const sortedPosts = fetchedPosts.sort(
-          (a, b) => b.createdAt.seconds - a.createdAt.seconds
-        );
-        setUserPosts(sortedPosts); // Guarda los posts en el estado
+    const unsubscribe = onSnapshot(q, (querySnapshot) => {
+      const fetchedPosts = [];
+      querySnapshot.forEach((doc) => {
+        fetchedPosts.push({ id: doc.id, ...doc.data() });
       });
 
-      // Retorna la función para detener la suscripción cuando el componente se desmonte
-      return unsubscribe;
-    };
+      const sortedPosts = fetchedPosts.sort((a, b) => b.createdAt.seconds - a.createdAt.seconds);
+      setUserPosts(sortedPosts);
+    });
 
-    // useEffect para escuchar los cambios en tiempo real
-    useEffect(() => {
-      const unsubscribe = fetchUserPosts(uid);
-      return () => unsubscribe(); // Limpiar suscripción cuando se desmonte el componente
-    }, [uid]);
+    return unsubscribe;
+  };
 
-    // Mientras cargan los datos
-    if (loading) {
-      return <div>Loading...</div>;
+  // useEffect para escuchar los cambios en tiempo real
+  useEffect(() => {
+    const unsubscribe = fetchUserPosts(uid);
+    return () => unsubscribe();
+  }, [uid]);
+
+  // Función para enviar una solicitud de amistad
+  const sendFriendRequest = async () => {
+    if (currentUser && userData) {
+      try {
+        const requestRef = collection(db, "friendRequests");
+
+        // Verificamos si ya existe una solicitud pendiente
+        const existingRequestQuery = query(
+          requestRef,
+          where("from", "==", currentUser.uid),
+          where("to", "==", userData.uid)
+        );
+        const existingRequestSnapshot = await getDocs(existingRequestQuery);
+
+        if (!existingRequestSnapshot.empty) {
+          Swal.fire("Request already sent", "You have already sent a request to this user.", "info");
+        } else {
+          // Si no hay solicitud previa, enviamos una nueva solicitud
+          await addDoc(requestRef, {
+            from: currentUser.uid,
+            to: userData.uid,
+            status: "pending",
+            timestamp: new Date()
+          });
+
+          setFriendRequestStatus("pending"); // Actualizamos el estado
+          Swal.fire("Friend request sent!", "Your request has been sent.", "success");
+        }
+      } catch (error) {
+        console.error("Error sending friend request:", error);
+        Swal.fire("Error", "There was an error sending the friend request.", "error");
+      }
     }
+  };
 
-    // Si no se encuentra el usuario
-    if (!userData) {
-      return <div>No user found</div>;
-    }
+  if (loading) {
+    return <div>Loading...</div>;
+  }
+
+  if (!userData) {
+    return <div>No user found</div>;
+  }
 
   return (
     <>
@@ -126,7 +157,7 @@ const FriendProfile = () => {
                       >
                         <ul className="header-nav d-flex flex-wrap justify-end p-0 m-0">
                           <li>
-                            <Link to="#" className="material-symbols-outlined">
+                            <Link to="#" className="material-symbols-outlined" onClick={sendFriendRequest}>
                               personadd
                             </Link>
                           </li>
@@ -135,7 +166,7 @@ const FriendProfile = () => {
                               mail
                             </Link>
                           </li>
-                        </ul> 
+                        </ul>
                       </div>
                     </Container>
                     <div className="user-detail text-center mb-3">
@@ -227,40 +258,27 @@ const FriendProfile = () => {
                   <Card.Body>
                     <ul className="list-inline p-0 m-0">
                       <li className="mb-2 d-flex align-items-center">
-                        <span className="material-symbols-outlined md-18">
-                          face
-                        </span>
+                        <span className="material-symbols-outlined md-18">face</span>
                         <p className="mb-0 ms-2">{userData.aboutMe || "Web Developer"}</p>
                       </li>
                       <li className="mb-2 d-flex align-items-center">
-                        <span className="material-symbols-outlined md-18">
-                          celebration
-                        </span>
+                        <span className="material-symbols-outlined md-18">celebration</span>
                         <p className="mb-0 ms-2">{userData.dob || "07/05/2000"}</p>
                       </li>
                       <li className="mb-2 d-flex align-items-center">
-                        <span className="material-symbols-outlined md-18">
-                          place
-                        </span>
+                        <span className="material-symbols-outlined md-18">place</span>
                         <p className="mb-0 ms-2">{userData.country || "CR"}</p>
                       </li>
                       <li className="d-flex align-items-center">
-                        <span className="material-symbols-outlined md-18">
-                          wc
-                        </span>
+                        <span className="material-symbols-outlined md-18">wc</span>
                         <p className="mb-0 ms-2">{userData.gender || "Male"}</p>
                       </li>
                     </ul>
                   </Card.Body>
                 </Card>
-
-                
-                <div className="fixed-suggestion mb-0 mb-lg-4">
-                </div>
               </Col>
               <Col lg={8}>
-
-              <Row>
+                <Row>
                   {userPosts && userPosts.length > 0 ? (
                     userPosts.map((post) => (
                       <Col sm={12} className="special-post" key={post.id}>
@@ -283,7 +301,6 @@ const FriendProfile = () => {
                     <p>No posts available</p>
                   )}
                 </Row>
-        
               </Col>
             </Row>
           </Row>
