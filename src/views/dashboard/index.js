@@ -1,15 +1,13 @@
 import React, { useEffect, useState } from "react";
 import { Row, Col, Container } from "react-bootstrap";
-import { collection, onSnapshot } from "firebase/firestore"; 
+import { collection, onSnapshot, query, orderBy } from "firebase/firestore"; 
 import { db } from "../../config/firebase"; 
+import { FaMapMarkerAlt, FaPlus, FaTimes } from "react-icons/fa"; 
 import Card from "../../components/Card";
 import CreatePost from "../../components/create-post";
-import Post from "../../components/Post"; // Importa el componente Post
+import Post from "../../components/Post";
 
 // Imágenes
-import user14 from "../../assets/images/user/06.jpg";
-import user15 from "../../assets/images/user/07.jpg";
-import user16 from "../../assets/images/user/08.jpg";
 import user5 from "../../assets/images/page-img/fun.webp";
 import loader from "../../assets/images/page-img/page-load-loader.gif";
 import boyImg from "../../assets/images/page-img/boy.webp";
@@ -25,6 +23,75 @@ const FsLightbox = ReactFsLightbox.default
   ? ReactFsLightbox.default
   : ReactFsLightbox;
 
+const SuggestionsList = () => {
+  const [users, setUsers] = useState([]);
+
+  useEffect(() => {
+    const usersCollection = collection(db, "users");
+    const unsubscribe = onSnapshot(usersCollection, (snapshot) => {
+      const usersList = snapshot.docs
+        .map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }))
+        .filter((user) => user.role !== "admin");
+
+      const randomUsers = usersList
+        .sort(() => 0.5 - Math.random())
+        .slice(0, 3);
+
+      setUsers(randomUsers);
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  return (
+    <Card>
+      <div className="card-header d-flex justify-content-between">
+        <div className="header-title">
+          <h4 className="card-title">Suggestions for you</h4>
+        </div>
+      </div>
+      <Card.Body className="pt-0">
+        <ul className="list-inline m-0 p-0">
+          {users.map((user) => (
+            <li className="mb-3" key={user.uid}>
+              <div className="d-flex align-items-center gap-2 justify-content-between">
+                <div className="d-flex align-items-center gap-3">
+                  <img
+                    src={user.profilePic || "https://via.placeholder.com/60"}
+                    alt="profile"
+                    className="avatar-60 avatar-borderd object-cover avatar-rounded img-fluid d-inline-block"
+                  />
+                  <div>
+                    <h5>{user.username}</h5>
+                    <small className="text-capitalize">
+                      Followed by {user.followers} followers
+                    </small>
+                    <br />
+                    <small className="text-muted">
+                      <FaMapMarkerAlt /> {user.country} 
+                    </small>
+                  </div>
+                </div>
+                <div className="d-flex align-items-center flex-shrink-0 gap-2">
+                  <button className="btn btn-primary-subtle p-1 lh-1">
+                    <FaPlus className="font-size-14" />
+                  </button>
+                  <button className="btn btn-danger-subtle p-1 lh-1">
+                    <FaTimes className="font-size-14" />
+                  </button>
+                </div>
+              </div>
+            </li>
+          ))}
+        </ul>
+      </Card.Body>
+    </Card>
+  );
+};
+
 const Index = () => {
   const [posts, setPosts] = useState([]);
   const [loadContent, setLoadContent] = useState(true);
@@ -33,11 +100,12 @@ const Index = () => {
     slide: 1,
   });
 
-  // Obtener los posts en tiempo real desde Firebase
+  // Obtener los posts en tiempo real desde Firebase, ordenados por createdAt
   useEffect(() => {
     const postsCollection = collection(db, "posts");
-    
-    const unsubscribe = onSnapshot(postsCollection, (snapshot) => {
+    const postsQuery = query(postsCollection, orderBy("createdAt", "desc")); // Ordenar por createdAt, descendente
+
+    const unsubscribe = onSnapshot(postsQuery, (snapshot) => {
       const postsList = snapshot.docs.map((doc) => ({
         id: doc.id,
         ...doc.data(),
@@ -45,7 +113,6 @@ const Index = () => {
       setPosts(postsList);
     });
 
-    // Limpiar la suscripción al desmontar el componente
     return () => unsubscribe();
   }, []);
 
@@ -72,7 +139,6 @@ const Index = () => {
     });
   }
 
-  // Manejador de clics para los posts
   const handlePostClick = (postId) => {
     console.log("Post ID:", postId);
   };
@@ -95,11 +161,10 @@ const Index = () => {
                   </Col>
                 </Row>
                 <Row className="special-post-container">
-                  {/* Aquí van los posts */}
                   {posts.map((post) => (
                     <Post
                       key={post.id}
-                      postId={post.id}  // Pasar el ID del post
+                      postId={post.id}
                       user={post.user}
                       postText={post.postText}
                       selectedItemImage={post.selectedItemImage}
@@ -108,7 +173,7 @@ const Index = () => {
                       createdAt={post.createdAt}
                       comments={post.comments || 0}
                       shares={post.shares || 0}
-                      onPostClick={handlePostClick}  // Pasar la función de clic
+                      onPostClick={handlePostClick}
                     />
                   ))}
 
@@ -123,108 +188,7 @@ const Index = () => {
 
             <Col lg={4}>
               <div className="fixed-suggestion mb-0 mb-lg-4">
-                <Card>
-                  <div className="card-header d-flex justify-content-between">
-                    <div className="header-title">
-                      <h4 className="card-title">Suggestions for you</h4>
-                    </div>
-                  </div>
-                  <Card.Body className="pt-0">
-                    <ul className="list-inline m-0 p-0">
-                      <li className="mb-3">
-                        <div className="d-flex align-items-center gap-2 justify-content-between">
-                          <div className="d-flex align-items-center gap-3">
-                            <img
-                              src={user14}
-                              alt="story-img"
-                              className="avatar-60 avatar-borderd object-cover avatar-rounded img-fluid d-inline-block"
-                            />
-                            <div>
-                              <h5>David Arce</h5>
-                              <small className="text-capitalize">
-                                Followed by Jhon J + 2 more
-                              </small>
-                            </div>
-                          </div>
-                          <div className="d-flex align-items-center flex-shrink-0 gap-2">
-                            <button className="btn btn-primary-subtle p-1 lh-1">
-                              <i className="material-symbols-outlined font-size-14">
-                                add
-                              </i>
-                            </button>
-                            <button className="btn btn-danger-subtle p-1 lh-1">
-                              <i className="material-symbols-outlined font-size-14">
-                                close
-                              </i>
-                            </button>
-                          </div>
-                        </div>
-                      </li>
-                      <li className="mb-3">
-                        <div className="d-flex align-items-center gap-2 justify-content-between">
-                          <div className="d-flex align-items-center gap-3">
-                            <img
-                              src={user15}
-                              alt="story-img"
-                              className="avatar-60 avatar-borderd object-cover avatar-rounded img-fluid d-inline-block"
-                            />
-                            <div>
-                              <div className="d-flex align-items-center justify-content-between gap-2">
-                                <div>
-                                  <h5>Edward Arce</h5>
-                                  <small className="text-capitalize">
-                                    Followed by Warner Castillo + 2 more
-                                  </small>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                          <div className="d-flex align-items-center flex-shrink-0 gap-2">
-                            <button className="btn btn-primary-subtle p-1 lh-1">
-                              <i className="material-symbols-outlined font-size-14">
-                                add
-                              </i>
-                            </button>
-                            <button className="btn btn-danger-subtle p-1 lh-1">
-                              <i className="material-symbols-outlined font-size-14">
-                                close
-                              </i>
-                            </button>
-                          </div>
-                        </div>
-                      </li>
-                      <li className="">
-                        <div className="d-flex align-items-center gap-2 justify-content-between">
-                          <div className="d-flex align-items-center gap-3">
-                            <img
-                              src={user16}
-                              alt="story-img"
-                              className="avatar-60 avatar-borderd object-cover avatar-rounded img-fluid d-inline-block"
-                            />
-                            <div>
-                              <h5>Luis Chaves</h5>
-                              <small className="text-capitalize">
-                                Followed by Messi + 2 more
-                              </small>
-                            </div>
-                          </div>
-                          <div className="d-flex align-items-center flex-shrink-0 gap-2">
-                            <button className="btn btn-primary-subtle p-1 lh-1">
-                              <i className="material-symbols-outlined font-size-14">
-                                add
-                              </i>
-                            </button>
-                            <button className="btn btn-danger-subtle p-1 lh-1">
-                              <i className="material-symbols-outlined font-size-14">
-                                close
-                              </i>
-                            </button>
-                          </div>
-                        </div>
-                      </li>
-                    </ul>
-                  </Card.Body>
-                </Card>
+                <SuggestionsList />
               </div>
             </Col>
           </Row>
