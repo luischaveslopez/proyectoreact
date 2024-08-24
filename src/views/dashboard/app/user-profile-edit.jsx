@@ -93,27 +93,22 @@ const UserProfileEdit = () => {
             });
 
             if (confirmDelete.isConfirmed) {
-                // Delete user posts
                 const postsQuery = query(collection(db, "posts"), where("user.uid", "==", user.uid));
                 const postsSnapshot = await getDocs(postsQuery);
                 const deletePostsPromises = postsSnapshot.docs.map(doc => deleteDoc(doc.ref));
 
-                // Delete user profile document
                 const userDocRef = doc(db, "users", user.uid);
                 const deleteUserDocPromise = deleteDoc(userDocRef);
 
-                // Delete profile picture from storage (if exists)
                 const storageRef = ref(storage, `profilePics/${user.uid}`);
                 const deleteImagePromise = deleteObject(storageRef).catch(() => console.log("No profile picture to delete."));
 
-                // Wait for all deletions to complete
                 await Promise.all([...deletePostsPromises, deleteUserDocPromise, deleteImagePromise]);
 
-                // Delete user authentication
                 await deleteUser(user);
 
                 Swal.fire('Deleted!', 'Your account has been deleted.', 'success');
-                navigate('/login'); // Redirect to login page or other page
+                navigate('../auth/sign-in'); 
             }
         } catch (error) {
             console.error("Error deleting account:", error);
@@ -483,6 +478,11 @@ const UserProfileEdit = () => {
                                                         {imageUploading ? 'Uploading...' : 'Submit'}
                                                     </Button>{" "}
                                                     <Button type="reset" variant='' className="btn-danger-subtle">Cancel</Button>
+
+                                                    <Button 
+                                                        type="button" className="btn btn-danger ms-2" onClick={handleDeleteAccount} disabled={imageUploading}> {imageUploading ? 'Processing...' : 'Delete Account'}
+                                                    </Button>
+
                                                 </Form>
                                             </Card.Body>
                                         </Card>
