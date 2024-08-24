@@ -1,13 +1,17 @@
 import React, { useEffect, useState } from "react";
 import { Row, Col, Container } from "react-bootstrap";
-import { collection, onSnapshot, query, orderBy } from "firebase/firestore"; 
-import { db } from "../../config/firebase"; 
-import { FaMapMarkerAlt, FaPlus, FaTimes } from "react-icons/fa"; 
+import { collection, onSnapshot, query, orderBy } from "firebase/firestore";
+import { getAuth } from "firebase/auth";
+import { db } from "../../config/firebase";
+import { FaMapMarkerAlt, FaPlus, FaTimes } from "react-icons/fa";
 import Card from "../../components/Card";
 import CreatePost from "../../components/create-post";
 import Post from "../../components/Post";
 
 // Imágenes
+import user14 from "../../assets/images/user/06.jpg";
+import user15 from "../../assets/images/user/07.jpg";
+import user16 from "../../assets/images/user/08.jpg";
 import user5 from "../../assets/images/page-img/fun.webp";
 import loader from "../../assets/images/page-img/page-load-loader.gif";
 import boyImg from "../../assets/images/page-img/boy.webp";
@@ -71,7 +75,7 @@ const SuggestionsList = () => {
                     </small>
                     <br />
                     <small className="text-muted">
-                      <FaMapMarkerAlt /> {user.country} 
+                      <FaMapMarkerAlt /> {user.country}
                     </small>
                   </div>
                 </div>
@@ -99,11 +103,22 @@ const Index = () => {
     toggler: false,
     slide: 1,
   });
+  const [isReportChecked, setIsReportChecked] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  useEffect(() => {
+    const auth = getAuth();
+    const user = auth.currentUser;
+
+    if (user && user.uid === "rcKiJJ4ZwGRvdGk84uBJkMiQIww1") {
+      setIsAdmin(true);
+    }
+  }, []);
 
   // Obtener los posts en tiempo real desde Firebase, ordenados por createdAt
   useEffect(() => {
     const postsCollection = collection(db, "posts");
-    const postsQuery = query(postsCollection, orderBy("createdAt", "desc")); // Ordenar por createdAt, descendente
+    const postsQuery = query(postsCollection, orderBy("createdAt", "desc"));
 
     const unsubscribe = onSnapshot(postsQuery, (snapshot) => {
       const postsList = snapshot.docs.map((doc) => ({
@@ -139,9 +154,16 @@ const Index = () => {
     });
   }
 
+  // Manejador de clics para los posts
   const handlePostClick = (postId) => {
     console.log("Post ID:", postId);
   };
+
+  const handleCheckboxChange = () => {
+    setIsReportChecked(!isReportChecked);
+  };
+
+  const postFiltered = posts.filter((post) => post.reported === true);
 
   return (
     <>
@@ -160,26 +182,60 @@ const Index = () => {
                     <CreatePost className="card-block card-stretch card-height" />
                   </Col>
                 </Row>
+
+                {isAdmin && (
+                  <div className="mb-3">
+                    <label>
+                      <input
+                        type="checkbox"
+                        checked={isReportChecked}
+                        onChange={handleCheckboxChange}
+                      />
+                      Mostrar solo posts reportados
+                    </label>
+                  </div>
+                )}
+
                 <Row className="special-post-container">
-                  {posts.map((post) => (
-                    <Post
-                      key={post.id}
-                      postId={post.id}
-                      user={post.user}
-                      postText={post.postText}
-                      selectedItemImage={post.selectedItemImage}
-                      selectedItemInfo={post.selectedItemInfo}
-                      selectedItemType={post.selectedItemType}
-                      createdAt={post.createdAt}
-                      comments={post.comments || 0}
-                      shares={post.shares || 0}
-                      onPostClick={handlePostClick}
-                    />
-                  ))}
+                  {isReportChecked
+                    ? postFiltered.map((post) => (
+                        <Post
+                          key={post.id}
+                          postId={post.id}
+                          user={post.user}
+                          postText={post.postText}
+                          selectedItemImage={post.selectedItemImage}
+                          selectedItemInfo={post.selectedItemInfo}
+                          selectedItemType={post.selectedItemType}
+                          createdAt={post.createdAt}
+                          comments={post.comments || 0}
+                          shares={post.shares || 0}
+                          onPostClick={handlePostClick}
+                        />
+                      ))
+                    : posts.map((post) => (
+                        <Post
+                          key={post.id}
+                          postId={post.id}
+                          user={post.user}
+                          postText={post.postText}
+                          selectedItemImage={post.selectedItemImage}
+                          selectedItemInfo={post.selectedItemInfo}
+                          selectedItemType={post.selectedItemType}
+                          createdAt={post.createdAt}
+                          comments={post.comments || 0}
+                          shares={post.shares || 0}
+                          onPostClick={handlePostClick}
+                        />
+                      ))}
 
                   {loadContent && (
                     <div className="col-sm-12 text-center">
-                      <img src={loader} alt="loader" style={{ height: "100px" }} />
+                      <img
+                        src={loader}
+                        alt="loader"
+                        style={{ height: "100px" }}
+                      />
                     </div>
                   )}
                 </Row>
