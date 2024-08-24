@@ -11,6 +11,8 @@ import * as SettingSelector from "../../../store/setting/selectors";
 import { useSelector } from "react-redux";
 import { auth, db } from "../../../config/firebase";
 
+
+
 SwiperCore.use([Navigation, Autoplay]);
 
 const SignIn = () => {
@@ -20,6 +22,7 @@ const SignIn = () => {
   const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [userRole, setUserRole ] = useState(null);
 
   useEffect(() => {
     const rememberedEmail = localStorage.getItem("rememberMeEmail");
@@ -82,6 +85,9 @@ const SignIn = () => {
     } finally {
       setLoading(false);
     }
+    
+
+    
   };
 
   const handleSpotifySignIn = () => {

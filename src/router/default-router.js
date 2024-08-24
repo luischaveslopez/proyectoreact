@@ -8,6 +8,7 @@ import Notification from "../views/dashboard/app/notification";
 import FriendRequest from "../views/dashboard/app/friend-request";
 import UserAccountSetting from "../views/dashboard/app/user-account-setting";
 import UserProfileEdit from "../views/dashboard/app/user-profile-edit";
+import AdminDashboard from "../components/Admin/PostDashboard"
 
 // icon
 import Remixicon from "../views/dashboard/icons/icon-remixicon";
@@ -34,7 +35,7 @@ export const DefaultRouter = [
     element: <UserProfile />,
   },
   {
-    path: "dashboard/app/friend-profile/:username", // Aquí se añade el parámetro :username
+    path: "dashboard/app/friend-profile/:uid", // Aquí se añade el parámetro :username
     element: <FriendProfile />,
   },
   {
@@ -77,7 +78,9 @@ export const DefaultRouter = [
     path: "dashboard/extrapages/terms-of-service",
     element: <TermsofService />,
   },
- 
-
+  {
+    path:"/admin/dashboard",
+    element:<AdminDashboard/>,
+  },
 
 ];
