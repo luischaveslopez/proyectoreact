@@ -2,8 +2,8 @@ import React, { useState, useEffect } from "react";
 import { Col, Dropdown, Collapse, Modal, Button, Form } from "react-bootstrap";
 import { Link, useNavigate } from "react-router-dom";
 import { getAuth } from "firebase/auth";
-import { doc, updateDoc, deleteDoc, getDoc, Timestamp } from "firebase/firestore";
-import { db } from "../config/firebase"; 
+import { doc, updateDoc, deleteDoc, getDoc, addDoc, collection, Timestamp } from "firebase/firestore";
+import { db } from "../config/firebase";
 import Swal from 'sweetalert2';
 
 const Post = ({
@@ -37,6 +37,7 @@ const Post = ({
   const [editCommentText, setEditCommentText] = useState("");
   const [selectedComment, setSelectedComment] = useState(null);
   const [showEditCommentModal, setShowEditCommentModal] = useState(false);
+  const [totalShares, setTotalShares] = useState(shares);
 
   const auth = getAuth();
   const currentUser = auth.currentUser;
@@ -54,6 +55,7 @@ const Post = ({
         setAverageRating(postData.averageRating || 0);
         setPreviewUrl(postData.previewUrl || null);
         setCommentsList(postData.comments || []);
+        setTotalShares(postData.shares || 0);
         setIsOwner(currentUser?.uid === postData.user.uid);
       }
     };
@@ -269,6 +271,33 @@ const Post = ({
     }
   };
 
+  const handleSharePost = async () => {
+    try {
+      await addDoc(collection(db, "sharedPosts"), {
+        userId: currentUser.uid,
+        postId: postId,
+        sharedAt: Timestamp.now(),
+      });
+
+      const postDocRef = doc(db, "posts", postId);
+      await updateDoc(postDocRef, {
+        shares: totalShares + 1,
+      });
+
+      setTotalShares(totalShares + 1);
+
+      Swal.fire({
+        icon: 'success',
+        title: 'Post shared',
+        text: 'The post has been successfully shared!',
+        timer: 2000,
+        showConfirmButton: false,
+      });
+    } catch (error) {
+      console.error("Error sharing post:", error);
+    }
+  };
+
   const handleUserClick = () => {
     navigate(`/dashboard/app/friend-profile/${encodeURIComponent(user.uid)}`);
   };
@@ -413,17 +442,16 @@ const Post = ({
                   <span className="fw-medium">{commentsList.length} Comments</span>
                 </div>
                 <div className="share-block d-flex align-items-center feather-icon">
-                  <Link
-                    to="#"
-                    data-bs-toggle="modal"
-                    data-bs-target="#share-btn"
+                  <Button
+                    variant="link"
                     className="d-flex align-items-center"
+                    onClick={handleSharePost}
                   >
                     <span className="material-symbols-outlined align-text-top font-size-20">
                       share
                     </span>
-                    <span className="ms-1 fw-medium">{shares} Shares</span>
-                  </Link>
+                    <span className="ms-1 fw-medium">{totalShares} Shares</span>
+                  </Button>
                 </div>
               </div>
             </div>
