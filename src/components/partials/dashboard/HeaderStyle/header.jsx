@@ -3,18 +3,14 @@ import { Nav, Form, Card, Container, Image, Dropdown, Navbar } from "react-boots
 import { Link } from "react-router-dom";
 import { getAuth } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
+import { useSelector } from "react-redux";
+import { db } from "../../../../config/firebase";
+import SearchModal from "../../../search-modal";
 
 // Import default user image
 import defaultUserImage from "../../../../assets/images/user/1.jpg";
 import user3 from "../../../../assets/images/user/03.jpg";
-
-// Import selectors & action from setting store
 import * as SettingSelector from "../../../../store/setting/selectors";
-
-// Redux Selector / Action
-import { useSelector } from "react-redux";
-import { db } from "../../../../config/firebase";
-import SearchModal from "../../../search-modal";
 
 const Header = () => {
   const appName = useSelector(SettingSelector.app_name);
@@ -38,9 +34,16 @@ const Header = () => {
       if (user) {
         const userDoc = await getDoc(doc(db, "users", user.uid));
         if (userDoc.exists()) {
-          setUserData(userDoc.data());
+          const data = userDoc.data();
+          setUserData(data);
+          localStorage.setItem("userData", JSON.stringify(data));
         } else {
           console.log("No such document!");
+        }
+      } else {
+        const storedUserData = localStorage.getItem("userData");
+        if (storedUserData) {
+          setUserData(JSON.parse(storedUserData));
         }
       }
     };
@@ -257,33 +260,6 @@ const Header = () => {
                             Sign out
                           </Link>
                         </div>
-                      </div>
-                      <div className="iq-sub-card">
-                        <h5>Chat Settings</h5>
-                      </div>
-                      <div className="d-flex align-items-center iq-sub-card border-0">
-                        <i className="material-symbols-outlined text-success md-14">
-                          circle
-                        </i>
-                        <div className="ms-3">Online</div>
-                      </div>
-                      <div className="d-flex align-items-center iq-sub-card border-0">
-                        <i className="material-symbols-outlined text-warning md-14">
-                          circle
-                        </i>
-                        <div className="ms-3">Away</div>
-                      </div>
-                      <div className="d-flex align-items-center iq-sub-card border-0">
-                        <i className="material-symbols-outlined text-danger md-14">
-                          circle
-                        </i>
-                        <div className="ms-3">Disconnected</div>
-                      </div>
-                      <div className="d-flex align-items-center iq-sub-card border-0">
-                        <i className="material-symbols-outlined text-gray md-14">
-                          circle
-                        </i>
-                        <div className="ms-3">Invisible</div>
                       </div>
                     </Card.Body>
                   </Card>
