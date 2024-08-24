@@ -1,41 +1,132 @@
 import React, { useEffect, useState } from "react";
-//import { Link } from "react-router-dom";
-import { Form, Tab, Nav, Button, Dropdown } from "react-bootstrap";
-//import { Swiper, SwiperSlide } from "swiper/react";
-//img
+import { Form, Tab, Nav, Button } from "react-bootstrap";
+import { db } from "../../../config/firebase"; // Asegúrate de que esta sea la ruta correcta
+import {
+  collection,
+  query,
+  where,
+  onSnapshot,
+  addDoc,
+  serverTimestamp,
+  getDocs,
+} from "firebase/firestore";
+import Scrollbar from "smooth-scrollbar";
 import user1 from "../../../assets/images/chat/avatar/01.png";
 import user2 from "../../../assets/images/chat/avatar/02.png";
 import user9 from "../../../assets/images/chat/avatar/09.png";
 import user10 from "../../../assets/images/chat/avatar/10.png";
-
-
-//scrollbar
-import Scrollbar from "smooth-scrollbar";
-
-
+ 
 const Chat = () => {
-
+  const [activeChat, setActiveChat] = useState(null);
+  const [messages, setMessages] = useState([]);
+  const [users, setUsers] = useState([]);
+  const [onlineUsers, setOnlineUsers] = useState([]);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [newMessage, setNewMessage] = useState("");
+ 
   useEffect(() => {
     Scrollbar.init(document.querySelector(".data-scrollbar"));
-  })
-  const [active, setActive] = useState("first");
-  
-
-  const minisidebar = () => {
-    document.getElementsByTagName("ASIDE")[0].classList.toggle("sidebar-mini");
-  };
-
-  const person_online = [   //Importante para mantener la actividad del usuario
-    {
-      img: user1,
-      name: "Edward"
-    },
-    {
-      img: user2,
-      name: "John"
+ 
+    const fetchUsers = () => {
+      const q = query(collection(db, "users"));
+      onSnapshot(q, (snapshot) => {
+        const usersData = snapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+        setUsers(usersData);
+      });
+    };
+ 
+    const fetchOnlineUsers = () => {
+      const q = query(collection(db, "users"), where("online", "==", true));
+      onSnapshot(q, (snapshot) => {
+        const onlineUsersData = snapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+        setOnlineUsers(onlineUsersData);
+      });
+    };
+ 
+    fetchUsers();
+    fetchOnlineUsers();
+  }, []);
+ 
+  useEffect(() => {
+    if (activeChat) {
+      const q = query(
+        collection(db, "messages"),
+        where("chatId", "==", activeChat.id)
+      );
+      onSnapshot(q, (snapshot) => {
+        const messagesData = snapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+        setMessages(messagesData);
+      });
     }
-  ]
-
+  }, [activeChat]);
+ 
+  const handleSearch = async (e) => {
+    setSearchTerm(e.target.value);
+ 
+    if (e.target.value.trim() !== "") {
+      const q = query(
+        collection(db, "users"),
+        where("uid", "==", e.target.value.trim())
+      );
+ 
+      const querySnapshot = await getDocs(q);
+      const usersData = querySnapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+ 
+      setUsers(usersData);
+    } else {
+      // Si no hay término de búsqueda, restablece la lista de usuarios
+      const q = query(collection(db, "users"));
+      onSnapshot(q, (snapshot) => {
+        const usersData = snapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+        setUsers(usersData);
+      });
+    }
+  };
+ 
+  const startChat = (user) => {
+    const chatExists = users.find((u) => u.id === user.id);
+    if (chatExists) {
+      setActiveChat(chatExists);
+    } else {
+      const newChat = {
+        participants: [user.id],
+        createdAt: serverTimestamp(),
+      };
+      addDoc(collection(db, "chats"), newChat).then((docRef) => {
+        setActiveChat({ ...newChat, id: docRef.id });
+      });
+    }
+  };
+ 
+  const sendMessage = (e) => {
+    e.preventDefault();
+    if (newMessage.trim() !== "" && activeChat) {
+      const message = {
+        text: newMessage,
+        chatId: activeChat.id,
+        createdAt: serverTimestamp(),
+        senderId: activeChat.id, // Cambia esto con el ID del usuario actual
+      };
+      addDoc(collection(db, "messages"), message);
+      setNewMessage("");
+    }
+  };
+ 
   return (
     <>
       <Tab.Container id="left-tabs-example" defaultActiveKey="first">
@@ -47,29 +138,21 @@ const Chat = () => {
             <div className="d-flex align-items-center">
               <h5 className="fw-500">Chats</h5>
             </div>
-            <div
-              className="sidebar-toggle d-block d-xl-none"
-              data-toggle="sidebar"
-              data-active="true"
-              onClick={minisidebar}
-            ></div>
             <div className="chat-searchbar mt-3 pt-1 mb-4">
-              {" "}
-              {/*Search bar dentro del chateo */}
               <Form.Group className="form-group chat-search-data m-0">
                 <input
                   type="text"
                   className="form-control round"
                   id="chat-search"
                   placeholder="Search for messages or users..."
+                  value={searchTerm}
+                  onChange={handleSearch}
                 />
                 <i className="material-symbols-outlined">search</i>
               </Form.Group>
             </div>
-          </div>{" "}
-          {/*END */}
-
-          
+          </div>
+ 
           <div
             className="sidebar-body pt-0 data-scrollbar mb-5 pb-5 px-4"
             tabIndex="-1"
@@ -85,87 +168,71 @@ const Chat = () => {
                 role="tablist"
               >
                 <h6 className="mb-3 pb-1">Recent Chats</h6>
-                <Nav.Item
-                  as="li"
-                  className="iq-chat-list mb-3 ps-0"
-                  role="presentation"
-                >
-                  <Nav.Link
-                    className={`d-flex gap-3 rounded-2 zoom-in ${
-                      active === "first" ? "active" : ""
-                    }`}
-                    eventKey="first"
-                    onClick={() => setActive("first")}
+                {users.map((user) => (
+                  <Nav.Item
+                    as="li"
+                    className="iq-chat-list mb-3 ps-0"
+                    role="presentation"
+                    key={user.id}
+                    onClick={() => startChat(user)}
                   >
-                    <div className="position-relative">
-                      <img
-                        src={user1}
-                        alt="status-101"
-                        className="avatar-48 object-cover rounded-circle"
-                        loading="lazy"
-                      />
-                      <div className="iq-profile-badge bg-success"></div>
-                    </div>
-                    <div className="d-flex align-items-top w-100 iq-userlist-data">
-                      <div className="d-flex flex-grow-1 flex-column">
-                        <div className="d-flex align-items-center gap-1">
-                          <h6 className="mb-0 iq-userlist-name font-size-14 fw-semibold mb-0 text-ellipsis short-1 flex-grow-1">
-                            Edward
-                          </h6>
-                          <span className="mb-0 font-size-12">03:20 PM</span>
-                        </div>
-                        <div className="d-flex align-items-center gap-2">
-                          <p className="text-ellipsis short-1 flex-grow-1 font-size-14 mb-0">
-                            Lorem ipsum
-                          </p>
+                    <Nav.Link
+                      className={`d-flex gap-3 rounded-2 zoom-in ${
+                        activeChat && activeChat.id === user.id ? "active" : ""
+                      }`}
+                      eventKey={user.id}
+                    >
+                      <div className="position-relative">
+                        <img
+                          src={user.avatar || user1}
+                          alt={`status-${user.id}`}
+                          className="avatar-48 object-cover rounded-circle"
+                          loading="lazy"
+                        />
+                        <div
+                          className={`iq-profile-badge bg-${
+                            onlineUsers.includes(user) ? "success" : "secondary"
+                          }`}
+                        ></div>
+                      </div>
+                      <div className="d-flex align-items-top w-100 iq-userlist-data">
+                        <div className="d-flex flex-grow-1 flex-column">
+                          <div className="d-flex align-items-center gap-1">
+                            <h6 className="mb-0 iq-userlist-name font-size-14 fw-semibold mb-0 text-ellipsis short-1 flex-grow-1">
+                              {user.name}
+                            </h6>
+                            <span className="mb-0 font-size-12">03:20 PM</span>
+                          </div>
+                          <div className="d-flex align-items-center gap-2">
+                            <p className="text-ellipsis short-1 flex-grow-1 font-size-14 mb-0">
+                              {user.lastMessage || "Start chatting"}
+                            </p>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  </Nav.Link>
-                </Nav.Item>
+                    </Nav.Link>
+                  </Nav.Item>
+                ))}
               </ul>
             </div>
           </div>
           <div className="sidebar-footer"></div>
         </aside>
-
-        {/*Chat Message config */}
-       <main className="main-content">
+ 
+        <main className="main-content">
           <div className="container-fluid content-inner p-0" id="page_layout">
             <Tab.Content id="myTabContent">
-              <Tab.Pane //1
-                eventKey="first"
+              <Tab.Pane
+                eventKey={activeChat ? activeChat.id : "first"}
                 className="card mb-0 fade"
-                id="user-content-101"
                 role="tabpanel"
               >
-                <div className="chat-head">  {/*Chat Header */}
+                <div className="chat-head">
                   <header className="d-flex justify-content-between align-items-center pt-3 ps-3 pe-3 pb-3">
                     <div className="d-flex align-items-center gap-3">
-                      <div className="d-block d-xl-none">
-                        <button
-                          className="btn btn-sm btn-primary rounded btn-icon"
-                          data-toggle="sidebar"
-                          data-active="true"
-                          onClick={minisidebar}
-                        >
-                          <span className="btn-inner">
-                            <svg
-                              className="icon-rtl"
-                              width="20px"
-                              viewBox="0 0 24 24"
-                            >
-                              <path
-                                fill="currentColor"
-                                d="M4,11V13H16L10.5,18.5L11.92,19.92L19.84,12L11.92,4.08L10.5,5.5L16,11H4Z"
-                              ></path>
-                            </svg>
-                          </span>
-                        </button>
-                      </div>
                       <div className="avatar chat-user-profile m-0">
                         <img
-                          src={user1}
+                          src={activeChat?.avatar || user1}
                           alt="avatar"
                           className="avatar-50 rounded-pill"
                           loading="lazy"
@@ -173,247 +240,68 @@ const Chat = () => {
                         <div className="iq-profile-badge bg-success"></div>
                       </div>
                       <div>
-                        <h5 className="mb-0">Edward</h5>
+                        <h5 className="mb-0">{activeChat?.name || "Chat"}</h5>
                         <small className="text-capitalize fw-500">Online</small>
                       </div>
                     </div>
                   </header>
                 </div>
-
-                {/* Chat Text Initiate*/}
+ 
                 <div className="card-body chat-body bg-body">
-                  <div className="chat-day-title">
-                    <span className="main-title">Feb 1,2021</span>{" "}
-                    {/* Chat Title- last chat or by date*/}
-                  </div>
-                  <div className="iq-message-body iq-current-user">
-                    <div className="chat-profile text-center">
-                      <img
-                        src={user10}
-                        alt="chat-user"
-                        className="avatar-40 rounded-pill"
-                        loading="lazy"
-                      />
-                      <small className="iq-chating p-0 mb-0 d-block">
-                        16:34
-                      </small>
-                    </div>
-                     {/* Chat Text END*/}
-
-                      {/* Chat Text Initiate*/}
-                    <div className="iq-chat-text">
-                      <div className="d-flex align-items-center justify-content-end gap-1 gap-md-2">
-                        <div className="iq-chating-content d-flex align-items-center">
-                          <p className="mr-2 mb-0">
-                            How can we help? We're here for you! 😄
-                          </p>
+                  {messages.map((message) => (
+                    <div
+                      key={message.id}
+                      className={`iq-message-body ${
+                        message.senderId === activeChat?.id
+                          ? "iq-current-user"
+                          : "iq-other-user"
+                      }`}
+                    >
+                      <div className="chat-profile text-center">
+                        <img
+                          src={
+                            message.senderId === activeChat?.id
+                              ? user10
+                              : user1
+                          }
+                          alt="chat-user"
+                          className="avatar-40 rounded-pill"
+                          loading="lazy"
+                        />
+                        <small className="iq-chating p-0 mb-0 d-block">
+                          {new Date(
+                            message.createdAt?.toDate()
+                          ).toLocaleTimeString()}
+                        </small>
+                      </div>
+                      <div className="iq-chat-text">
+                        <div
+                          className={`d-flex align-items-center justify-content-${
+                            message.senderId === activeChat?.id
+                              ? "end"
+                              : "start"
+                          } gap-1 gap-md-2`}
+                        >
+                          <div className="iq-chating-content d-flex align-items-center">
+                            <p className="mr-2 mb-0">{message.text}</p>
+                          </div>
                         </div>
                       </div>
                     </div>
-                  </div>
-                  <div className="iq-message-body iq-other-user">
-                    <div className="chat-profile text-center">
-                      <img
-                        src={user1}
-                        alt="chat-user"
-                        className="avatar-40 rounded-pill"
-                        loading="lazy"
-                      />
-                      <small className="iq-chating p-0 mb-0 d-block">
-                        16:40
-                      </small>
-                    </div>
-                    {/* Chat Text END*/}
-
-                    <div className="iq-chat-text">
-                      <div className="d-flex align-items-center justify-content-start gap-md-2">
-                        <div className="iq-chating-content d-flex align-items-center">
-                          <p className="mr-2 mb-0">
-                            Hey John, I am looking for the best admin
-                            template.Could you please help me to find it out? 🤔
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Chat Text Initiate*/}
-                  <div className="iq-message-body iq-current-user">
-                    <div className="chat-profile text-center">
-                      <img
-                        src={user10}
-                        alt="chat-user"
-                        className="avatar-40 rounded-pill"
-                        loading="lazy"
-                      />
-                      <small className="iq-chating p-0 mb-0 d-block">
-                        6:49
-                      </small>
-                    </div>
-                    {/* Chat Text END*/}
-
-                    <div className="iq-chat-text">{/* Chat Text*/}
-                      <div className="d-flex align-items-center justify-content-end gap-1 gap-md-2">
-                        <div className="iq-chating-content d-flex align-items-center">
-                          <p className="mr-2 mb-0">
-                            Absolutely Yes! SocialV is the Responsive Bootstrap
-                            5 Admin Dashboard Template.
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="iq-message-body iq-other-user">
-                    <div className="chat-profile text-center">
-                      <img
-                        src={user1}
-                        alt="chat-user"
-                        className="avatar-40 rounded-pill"
-                        loading="lazy"
-                      />
-                      <small className="iq-chating p-0 mb-0 d-block">
-                        6:52
-                      </small>
-                    </div>
-                    <div className="iq-chat-text">
-                      <div className="d-flex align-items-center justify-content-start gap-md-2">
-                        <div className="iq-chating-content d-flex align-items-center">
-                          <p className="mr-2 mb-0">Looks clean and fresh UI.</p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="iq-message-body iq-current-user">
-                    <div className="chat-profile text-center">
-                      <img
-                        src={user10}
-                        alt="chat-user"
-                        className="avatar-40 rounded-pill"
-                        loading="lazy"
-                      />
-                      <small className="iq-chating p-0 mb-0 d-block">
-                        6:53
-                      </small>
-                    </div>
-
-                    <div className="iq-chat-text">
-                      <div className="d-flex align-items-center justify-content-end gap-1 gap-md-2">
-                        <div className="iq-chating-content d-flex align-items-center">
-                          <p className="mr-2 mb-0">Thanks, from ThemeForest.</p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="iq-message-body iq-other-user">
-                    <div className="chat-profile text-center">
-                      <img
-                        src={user1}
-                        alt="chat-user"
-                        className="avatar-40 rounded-pill"
-                        loading="lazy"
-                      />
-                      <small className="iq-chating p-0 mb-0 d-block">
-                        6:54
-                      </small>
-                    </div>
-                     {/* Chat Text*/}
-                    <div className="iq-chat-text">
-                      <div className="d-flex align-items-center justify-content-start gap-md-2">
-                        <div className="iq-chating-content d-flex align-items-center">
-                          <p className="mr-2 mb-0">
-                            I will purchase it for sure. 👍
-                          </p>
-                        </div>
-                        
-                      </div>
-                    </div>
-                  </div>
-                  <div className="iq-message-body iq-current-user">
-                    <div className="chat-profile text-center">
-                      <img
-                        src={user10}
-                        alt="chat-user"
-                        className="avatar-40 rounded-pill"
-                        loading="lazy"
-                      />
-                      <small className="iq-chating p-0 mb-0 d-block">
-                        6:55
-                      </small>
-                    </div>
-                    {/* Chat Text END*/}
-
-
-                    <div className="iq-chat-text">
-                      <div className="d-flex align-items-center justify-content-end gap-1 gap-md-2">
-                        <div className="iq-chating-content d-flex align-items-center">
-                          <p className="mr-2 mb-0">Okay Thanks..</p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="iq-message-body iq-other-user">
-                    <div className="chat-profile text-center">
-                      <img
-                        src={user1}
-                        alt="chat-user"
-                        className="avatar-40 rounded-pill"
-                        loading="lazy"
-                      />
-                      <small className="iq-chating p-0 mb-0 d-block">
-                        7:54
-                      </small>
-                    </div>
-
-                      {/* Chat Text END*/}
-                    <div className="iq-chat-text">
-                      <div className="d-flex align-items-center justify-content-start gap-md-2">
-                        <div className="iq-chating-content d-flex align-items-center">
-                          <p className="mr-2 mb-0">Looks clean and fresh UI.</p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="iq-message-body iq-current-user">
-                    <div className="chat-profile text-center">
-                      <img
-                        src={user10}
-                        alt="chat-user"
-                        className="avatar-40 rounded-pill"
-                        loading="lazy"
-                      />
-                      <small className="iq-chating p-0 mb-0 d-block">
-                        7:55
-                      </small>
-                    </div>
-                      {/* Chat Text END*/}
-
-                    <div className="iq-chat-text">
-                      <div className="d-flex align-items-center justify-content-end gap-1 gap-md-2">
-                        <div className="iq-chating-content d-flex align-items-center">
-                          <p className="mr-2 mb-0">Thanks, from ThemeForest.</p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
+                  ))}
                 </div>
-                 {/* AQUI TERMINA EL CHAT  */}
-                 
-                  {/* Chat Attachments icons */}
+ 
                 <div className="card-footer px-3 py-3 border-top rounded-0">
-                  <form className="d-flex align-items-center" action="#">
-                    <div className="chat-attagement d-flex">
-                      {/* Chat Attachments*/}
-                    </div>
+                  <form className="d-flex align-items-center" onSubmit={sendMessage}>
+                    <div className="chat-attagement d-flex"></div>
                     <input
                       type="text"
                       className="form-control me-3"
                       placeholder="Type your message"
+                      value={newMessage}
+                      onChange={(e) => setNewMessage(e.target.value)}
                     />
-                    <button
-                      type="submit"
-                      className="btn btn-primary d-flex align-items-center"
-                    >
+                    <Button type="submit" className="btn btn-primary d-flex align-items-center">
                       <svg
                         className="icon-20"
                         width="18"
@@ -430,13 +318,10 @@ const Chat = () => {
                         ></path>
                       </svg>
                       <span className="d-none d-lg-block ms-1">Send</span>
-                    </button>
+                    </Button>
                   </form>
                 </div>
               </Tab.Pane>
-
-              {/* Termina por aca */}
-
             </Tab.Content>
           </div>
         </main>
@@ -444,4 +329,5 @@ const Chat = () => {
     </>
   );
 };
+ 
 export default Chat;
