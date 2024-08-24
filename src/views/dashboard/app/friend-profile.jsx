@@ -1,33 +1,16 @@
 import React, { useState, useEffect } from "react";
-import { Row, Col, Container, Dropdown } from "react-bootstrap";
+import { Row, Col, Container } from "react-bootstrap";
 import { collection, query, where, onSnapshot, getDocs } from "firebase/firestore";
 import { db } from '../../../config/firebase';
 import Card from "../../../components/Card";
-
-
-import CustomToggle from "../../../components/dropdowns";
 import { Link, useParams } from "react-router-dom";
 import ReactFsLightbox from "fslightbox-react";
-import ShareOffcanvas from "../../../components/share-offcanvas";
 import Post from "../../../components/Post"
 
 // images
 import img1 from "../../../assets/images/page-img/fun.webp";
 // images
 import user1 from "../../../assets/images/user/11.png";
-import user05 from "../../../assets/images/user/05.jpg";
-import user02 from "../../../assets/images/user/02.jpg";
-import user03 from "../../../assets/images/user/03.jpg";
-import user08 from "../../../assets/images/user/08.jpg";
-import user09 from "../../../assets/images/user/09.jpg";
-import user11 from "../../../assets/images/user/1.jpg";
-import icon1 from "../../../assets/images/icon/01.png";
-import icon2 from "../../../assets/images/icon/02.png";
-import icon3 from "../../../assets/images/icon/03.png";
-import icon4 from "../../../assets/images/icon/04.png";
-import icon5 from "../../../assets/images/icon/05.png";
-import icon6 from "../../../assets/images/icon/06.png";
-import icon7 from "../../../assets/images/icon/07.png";
 import g1 from "../../../assets/images/page-img/g1.jpg";
 import g2 from "../../../assets/images/page-img/g2.jpg";
 import g3 from "../../../assets/images/page-img/g3.jpg";
@@ -37,10 +20,7 @@ import g6 from "../../../assets/images/page-img/g6.jpg";
 import g7 from "../../../assets/images/page-img/g7.jpg";
 import g8 from "../../../assets/images/page-img/g8.jpg";
 import g9 from "../../../assets/images/page-img/g9.jpg";
-import img56 from "../../../assets/images/page-img/p2.jpg";
-import img58 from "../../../assets/images/page-img/p1.jpg";
-import img57 from "../../../assets/images/page-img/p3.jpg";
-import img59 from "../../../assets/images/page-img/59.jpg";
+
 
 // Fslightbox plugin
 const FsLightbox = ReactFsLightbox.default
@@ -49,7 +29,6 @@ const FsLightbox = ReactFsLightbox.default
 
 const FriendProfile = () => {
   const { uid } = useParams(); // Obtiene el username desde la URL
-  const [friendPosts, setFriendPosts] = useState([]);
   const [userPosts, setUserPosts] = useState([]);
   const [userData, setUserData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -84,43 +63,43 @@ const FriendProfile = () => {
     fetchUserData();
   }, [uid]);
 
-  // Función para obtener los posts del amigo
-  const fetchUserPosts = async (uid) => {
-    try {
+// Función para obtener los posts del amigo en tiempo real
+    const fetchUserPosts = (uid) => {
       const q = query(collection(db, "posts"), where("user.uid", "==", uid));
-      const querySnapshot = await getDocs(q);
 
-      const fetchedPosts = [];
-      querySnapshot.forEach((doc) => {
-        fetchedPosts.push({ id: doc.id, ...doc.data() });
+      // Usamos onSnapshot para escuchar cambios en tiempo real
+      const unsubscribe = onSnapshot(q, (querySnapshot) => {
+        const fetchedPosts = [];
+        querySnapshot.forEach((doc) => {
+          fetchedPosts.push({ id: doc.id, ...doc.data() });
+        });
+
+        // Ordenar los posts por fecha de creación (de más reciente a más antiguo)
+        const sortedPosts = fetchedPosts.sort(
+          (a, b) => b.createdAt.seconds - a.createdAt.seconds
+        );
+        setUserPosts(sortedPosts); // Guarda los posts en el estado
       });
 
-      // Ordenar los posts por fecha de creación (de más reciente a más antiguo)
-      const sortedPosts = fetchedPosts.sort(
-        (a, b) => b.createdAt.seconds - a.createdAt.seconds
-      );
-      setUserPosts(sortedPosts); // Guarda los posts en el estado
-    } catch (error) {
-      console.error("Error fetching friend posts:", error);
+      // Retorna la función para detener la suscripción cuando el componente se desmonte
+      return unsubscribe;
+    };
+
+    // useEffect para escuchar los cambios en tiempo real
+    useEffect(() => {
+      const unsubscribe = fetchUserPosts(uid);
+      return () => unsubscribe(); // Limpiar suscripción cuando se desmonte el componente
+    }, [uid]);
+
+    // Mientras cargan los datos
+    if (loading) {
+      return <div>Loading...</div>;
     }
-  };
 
-  // Mientras cargan los datos
-  if (loading) {
-    return <div>Loading...</div>;
-  }
-
-  // Si no se encuentra el usuario
-  if (!userData) {
-    return <div>No user found</div>;
-  }
-
-  function imageOnSlide(number) {
-    setImageController({
-      toggler: !imageController.toggler,
-      slide: number,
-    });
-  }
+    // Si no se encuentra el usuario
+    if (!userData) {
+      return <div>No user found</div>;
+    }
 
   return (
     <>

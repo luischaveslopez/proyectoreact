@@ -6,12 +6,9 @@ import {
   Dropdown,
   Nav,
   Tab,
-  OverlayTrigger,
-  Tooltip,
-  Collapse,
 } from "react-bootstrap";
 import { getAuth } from "firebase/auth";
-import { doc, getDoc, collection, query, where, getDocs, orderBy, onSnapshot} from "firebase/firestore"; // Importar las funciones correctamente
+import { doc, getDoc, collection, query, where, onSnapshot} from "firebase/firestore"; // Importar las funciones correctamente
 import { db } from '../../../config/firebase'; // Asegúrate de que la ruta sea correcta
 import Card from "../../../components/Card";
 import CreatePost from "../../../components/create-post";
@@ -19,34 +16,17 @@ import Post from "../../../components/Post"
 // import ShareOffcanvas from "../../../components/share-offcanvas";
 import { Link } from "react-router-dom";
 import ReactFsLightbox from "fslightbox-react";
-import Doteddropdown from "../../../components/custom/Doted_dropdown";
 
 // images
 import img1 from "../../../assets/images/page-img/fun.webp";
-// import img2 from "../../../assets/images/user/11.png";
 import user1 from "../../../assets/images/user/1.jpg";
 import user05 from "../../../assets/images/user/05.jpg";
-import user01 from "../../../assets/images/user/01.jpg";
-import user02 from "../../../assets/images/user/02.jpg";
-import user03 from "../../../assets/images/user/03.jpg";
 import user06 from "../../../assets/images/user/06.jpg";
 import user07 from "../../../assets/images/user/07.jpg";
 import user08 from "../../../assets/images/user/08.jpg";
 import user09 from "../../../assets/images/user/09.jpg";
 import user10 from "../../../assets/images/user/10.jpg";
-import user13 from "../../../assets/images/user/13.jpg";
 
-
-import img04 from "../../../assets/images/user/04.jpg";
-// import p1 from "../../../assets/images/page-img/p1.jpg";
-// import p3 from "../../../assets/images/page-img/p3.jpg";
-import icon1 from "../../../assets/images/icon/01.png";
-import icon2 from "../../../assets/images/icon/02.png";
-import icon3 from "../../../assets/images/icon/03.png";
-import icon4 from "../../../assets/images/icon/04.png";
-import icon5 from "../../../assets/images/icon/05.png";
-import icon6 from "../../../assets/images/icon/06.png";
-import icon7 from "../../../assets/images/icon/07.png";
 import g1 from "../../../assets/images/page-img/g1.jpg";
 import g2 from "../../../assets/images/page-img/g2.jpg";
 import g3 from "../../../assets/images/page-img/g3.jpg";
@@ -80,28 +60,12 @@ import boyImg from "../../../assets/images/page-img/boy.webp";
 import img11 from "../../../assets/images/page-img/fd.webp";
 
 
-import ShareOffcanvasNew from "../../../components/ShareOffcanvasNew";
 // Fslightbox plugin
 const FsLightbox = ReactFsLightbox.default
   ? ReactFsLightbox.default
   : ReactFsLightbox;
 
 const UserProfile = () => {
-  const [open, setOpen] = useState(false);
-  const [open1, setOpen1] = useState(false);
-  const [open2, setOpen2] = useState(false);
-  const [open3, setOpen3] = useState(false);
-  
-
-  const [modalShow, setModalShow] = useState(false);
-  const [modalShow1, setModalShow1] = useState(false);
-  const [modalShow2, setModalShow2] = useState(false);
-  const [modalShow3, setModalShow3] = useState(false);
-
-  const [open_replay, setopen_replay] = useState(false)
-  const [open_replay1, setopen_replay1] = useState(false)
-  const [open_replay2, setopen_replay2] = useState(false)
-  const [open_replay3, setopen_replay3] = useState(false)
 
   const [posts, setPosts] = useState(0); // Para el número de posts
   const [followers, setFollowers] = useState(0); // Para el número de seguidores
