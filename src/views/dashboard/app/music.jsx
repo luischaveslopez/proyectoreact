@@ -1,14 +1,7 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Container, Row, Col } from "react-bootstrap";
 import Card from "../../../components/Card";
-import {
-  FaPlay,
-  FaPause,
-  FaStepForward,
-  FaStepBackward,
-  FaRandom,
-} from "react-icons/fa";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Autoplay } from "swiper/modules";
 import SwiperCore from "swiper";
@@ -17,7 +10,6 @@ import "./Music.css";
 //img
 import imgn1 from "../../../assets/images/page-img/n1.jpg";
 import imgn2 from "../../../assets/images/page-img/n2.jpg";
-import imgr1 from "../../../assets/images/page-img/r1.jpg";
 import imgr2 from "../../../assets/images/page-img/r2.jpg";
 
 // install Swiper modules
@@ -28,13 +20,9 @@ const Music = () => {
   const [newMusic, setNewMusic] = useState([]);
   const [topMusic, setTopMusic] = useState([]);
   const [topTracks, setTopTracks] = useState([]);
-  const [currentPreview, setCurrentPreview] = useState(null);
-  const [playingTrackId, setPlayingTrackId] = useState(null);
-
-  const audioRef = useRef(null);
+  const [currentTrack, setCurrentTrack] = useState(null);
+  const [audio, setAudio] = useState(null);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [currentTime, setCurrentTime] = useState(0);
-  const [duration, setDuration] = useState(0);
 
   useEffect(() => {
     const fetchSpotifyData = async () => {
@@ -88,87 +76,39 @@ const Music = () => {
     fetchSpotifyData();
   }, []);
 
-  const playPreview = (previewUrl, trackId) => {
-    if (currentPreview) {
-      currentPreview.pause();
+  const handlePlayPause = (trackUrl, trackId) => {
+    try {
+      if (!trackUrl) {
+        console.error("Track URL is invalid or empty");
+        return;
+      }
+  
+      if (currentTrack === trackId) {
+        if (isPlaying) {
+          audio.pause();
+        } else {
+          audio.play();
+        }
+        setIsPlaying(!isPlaying);
+      } else {
+        if (audio) {
+          audio.pause();
+        }
+        const newAudio = new Audio(trackUrl);
+        setAudio(newAudio);
+        newAudio.play();
+        setCurrentTrack(trackId);
+        setIsPlaying(true);
+      }
+    } catch (error) {
+      console.error("Error handling play/pause", error);
     }
-
-    if (previewUrl) {
-      const audio = new Audio(previewUrl);
-      audio.play();
-      setCurrentPreview(audio);
-      setPlayingTrackId(trackId);
-
-      audio.onended = () => {
-        setPlayingTrackId(null);
-      };
-    } else {
-      console.error("No preview available for this track.");
-    }
   };
-
-  const handlePlayPause = () => {
-    if (isPlaying) {
-      audioRef.current.pause();
-    } else {
-      audioRef.current.play();
-    }
-    setIsPlaying(!isPlaying);
-  };
-
-  const handleTimeUpdate = () => {
-    setCurrentTime(audioRef.current.currentTime);
-  };
-
-  const handleLoadedData = () => {
-    setDuration(audioRef.current.duration);
-  };
-
-  const handleSeek = (e) => {
-    const seekTime = (e.target.value / 100) * duration;
-    audioRef.current.currentTime = seekTime;
-    setCurrentTime(seekTime);
-  };
-
-  const formatTime = (time) => {
-    const minutes = Math.floor(time / 60);
-    const seconds = Math.floor(time % 60);
-    return `${minutes}:${seconds < 10 ? "0" : ""}${seconds}`;
-  };
+  
 
   return (
     <>
-      <div className="music-player-container">
-        <audio
-          ref={audioRef}
-          src={topTracks[0]?.preview_url || ""}
-          onTimeUpdate={handleTimeUpdate}
-          onLoadedData={handleLoadedData}
-        ></audio>
-        <div className="music-player-controls">
-          <FaRandom className="icon" />
-          <FaStepBackward className="icon" />
-          {isPlaying ? (
-            <FaPause className="icon play-pause" onClick={handlePlayPause} />
-          ) : (
-            <FaPlay className="icon play-pause" onClick={handlePlayPause} />
-          )}
-          <FaStepForward className="icon" />
-        </div>
-        <div className="music-player-progress">
-          <span>{formatTime(currentTime)}</span>
-          <input
-            type="range"
-            min="0"
-            max="100"
-            value={(currentTime / duration) * 100 || 0}
-            onChange={handleSeek}
-          />
-          <span>{formatTime(duration)}</span>
-        </div>
-      </div>
-
-      <div id="content-page" className="content-inner">
+      <div id="content-page" className="content-inner mt-4">
         <Container>
           <Row>
             <Col md="4">
@@ -255,26 +195,13 @@ const Music = () => {
                     {newMusic.map((album, index) => (
                       <SwiperSlide key={index} className="text-center">
                         <div className="music-thumbnail position-relative mb-3">
-                          <Link
-                            to="#"
-                            onClick={() =>
-                              playPreview(album.preview_url, album.id)
-                            }
-                          >
+                          <Link to="#">
                             <img
                               src={album.images[0]?.url || imgn2}
                               alt="album-thumb"
                               className="img-fluid w-100"
                             />
                           </Link>
-                          <div className="play-btn">
-                            <Link
-                              to="#"
-                              className="material-symbols-outlined text-white"
-                            >
-                              play_arrow
-                            </Link>
-                          </div>
                         </div>
                         <h6>{album.name}</h6>
                         <p className="mb-0">{album.artists[0].name}</p>
@@ -375,22 +302,28 @@ const Music = () => {
                     {topTracks.map((track, index) => (
                       <SwiperSlide key={index} className="text-center">
                         <div className="music-thumbnail position-relative mb-3">
-                          <Link
-                            to="#"
-                            onClick={() => playPreview(track.preview_url, track.id)}
-                          >
+                          <Link to="#">
                             <img
                               src={track.album.images[0]?.url || imgn2}
                               alt="track-thumb"
-                              className="img-fluid w-100"
+                              className={`img-fluid w-100 ${
+                                currentTrack === track.id && isPlaying
+                                  ? "playing-animation"
+                                  : ""
+                              }`}
                             />
                           </Link>
                           <div className="play-btn">
                             <Link
                               to="#"
                               className="material-symbols-outlined text-white"
+                              onClick={() =>
+                                handlePlayPause(track.preview_url, track.id)
+                              }
                             >
-                              play_arrow
+                              {currentTrack === track.id && isPlaying
+                                ? "pause"
+                                : "play_arrow"}
                             </Link>
                           </div>
                         </div>
@@ -410,4 +343,3 @@ const Music = () => {
 };
 
 export default Music;
-//
