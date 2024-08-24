@@ -270,7 +270,7 @@ const Post = ({
   };
 
   const handleUserClick = () => {
-    navigate(`/dashboard/app/friend-profile/${encodeURIComponent(user.username)}`);
+    navigate(`/dashboard/app/friend-profile/${encodeURIComponent(user.uid)}`);
   };
 
   return (

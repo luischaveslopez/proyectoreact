@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Container, Row, Col, Card, Tab, Form, Button, Nav } from 'react-bootstrap';
 import { useNavigate, Link } from 'react-router-dom';
-import { getAuth, updatePassword, EmailAuthProvider, reauthenticateWithCredential } from 'firebase/auth';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
-import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { getAuth, updatePassword, EmailAuthProvider, reauthenticateWithCredential, deleteUser } from 'firebase/auth';
+import { doc, getDoc, setDoc, deleteDoc, collection, query, where, getDocs } from 'firebase/firestore';
+import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
 import Swal from 'sweetalert2'; // Importa SweetAlert2
 import { db } from '../../../config/firebase';
 
@@ -78,6 +78,46 @@ const UserProfileEdit = () => {
             fetchUserData();
         }
     }, [user]);
+
+    const handleDeleteAccount = async () => {
+        try {
+            const confirmDelete = await Swal.fire({
+                title: 'Are you sure?',
+                text: "This action will delete your account and all related data. This cannot be undone!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'Yes, delete it!',
+                cancelButtonText: 'Cancel'
+            });
+
+            if (confirmDelete.isConfirmed) {
+                // Delete user posts
+                const postsQuery = query(collection(db, "posts"), where("user.uid", "==", user.uid));
+                const postsSnapshot = await getDocs(postsQuery);
+                const deletePostsPromises = postsSnapshot.docs.map(doc => deleteDoc(doc.ref));
+
+                // Delete user profile document
+                const userDocRef = doc(db, "users", user.uid);
+                const deleteUserDocPromise = deleteDoc(userDocRef);
+
+                // Delete profile picture from storage (if exists)
+                const storageRef = ref(storage, `profilePics/${user.uid}`);
+                const deleteImagePromise = deleteObject(storageRef).catch(() => console.log("No profile picture to delete."));
+
+                // Wait for all deletions to complete
+                await Promise.all([...deletePostsPromises, deleteUserDocPromise, deleteImagePromise]);
+
+                // Delete user authentication
+                await deleteUser(user);
+
+                Swal.fire('Deleted!', 'Your account has been deleted.', 'success');
+                navigate('/login'); // Redirect to login page or other page
+            }
+        } catch (error) {
+            console.error("Error deleting account:", error);
+            Swal.fire('Error!', 'There was an error deleting your account.', 'error');
+        }
+    };
 
     const handleChange = (e) => {
         const { id, value } = e.target;
@@ -474,6 +514,7 @@ const UserProfileEdit = () => {
                                                     </Form.Group>
                                                     <Button type="submit" className="btn btn-primary me-2">Submit</Button>{" "}
                                                     <Button type="reset" variant='' className="btn-danger-subtle">Cancel</Button>
+                                                    
                                                 </Form>
                                             </Card.Body>
                                         </Card>

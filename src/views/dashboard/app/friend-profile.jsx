@@ -48,7 +48,7 @@ const FsLightbox = ReactFsLightbox.default
   : ReactFsLightbox;
 
 const FriendProfile = () => {
-  const { username } = useParams(); // Obtiene el username desde la URL
+  const { uid } = useParams(); // Obtiene el username desde la URL
   const [friendPosts, setFriendPosts] = useState([]);
   const [userPosts, setUserPosts] = useState([]);
   const [userData, setUserData] = useState(null);
@@ -62,7 +62,7 @@ const FriendProfile = () => {
   useEffect(() => {
     const fetchUserData = async () => {
       try {
-        const q = query(collection(db, "users"), where("username", "==", username));
+        const q = query(collection(db, "users"), where("uid", "==", uid));
         const querySnapshot = await getDocs(q);
 
         if (!querySnapshot.empty) {
@@ -70,9 +70,9 @@ const FriendProfile = () => {
           setUserData(doc.data());
 
           // Ahora que tienes el uid del amigo, obtén sus posts
-          fetchFriendPosts(doc.data().uid); // Llamada para obtener los posts del amigo en tiempo real
+          fetchUserPosts(doc.data().uid); // Llamada para obtener los posts del amigo
         } else {
-          console.error("No user found with the username:", username);
+          console.error("No user found with the username:", uid);
         }
       } catch (error) {
         console.error("Error fetching user data: ", error);
@@ -82,24 +82,27 @@ const FriendProfile = () => {
     };
 
     fetchUserData();
-  }, [username]);
+  }, [uid]);
 
-  // Función para obtener los posts del amigo en tiempo real
-  const fetchFriendPosts = (uid) => {
-    const q = query(collection(db, "posts"), where("user.uid", "==", uid));
-    
-    const unsubscribe = onSnapshot(q, (querySnapshot) => {
+  // Función para obtener los posts del amigo
+  const fetchUserPosts = async (uid) => {
+    try {
+      const q = query(collection(db, "posts"), where("user.uid", "==", uid));
+      const querySnapshot = await getDocs(q);
+
       const fetchedPosts = [];
       querySnapshot.forEach((doc) => {
         fetchedPosts.push({ id: doc.id, ...doc.data() });
       });
 
       // Ordenar los posts por fecha de creación (de más reciente a más antiguo)
-      const sortedPosts = fetchedPosts.sort((a, b) => b.createdAt.seconds - a.createdAt.seconds);
-      setFriendPosts(sortedPosts); // Guarda los posts en el estado
-    });
-
-    return () => unsubscribe(); // Limpiar suscripción cuando se desmonte el componente
+      const sortedPosts = fetchedPosts.sort(
+        (a, b) => b.createdAt.seconds - a.createdAt.seconds
+      );
+      setUserPosts(sortedPosts); // Guarda los posts en el estado
+    } catch (error) {
+      console.error("Error fetching friend posts:", error);
+    }
   };
 
   // Mientras cargan los datos
