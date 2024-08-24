@@ -1,14 +1,14 @@
 import React, { useEffect, useState } from "react";
 import { Row, Col, Container } from "react-bootstrap";
-import { collection, onSnapshot, query, orderBy, where, getDocs, addDoc } from "firebase/firestore";
-import { getAuth } from "firebase/auth";
+import { collection, onSnapshot, query, orderBy, where, getDocs, addDoc, deleteDoc, doc, updateDoc } from "firebase/firestore";
+import { getAuth, deleteUser } from "firebase/auth"; // Importar deleteUser de Firebase Auth
 import { db } from "../../config/firebase";
-import { FaMapMarkerAlt, FaPlus, FaTimes } from "react-icons/fa";
+import { FaMapMarkerAlt, FaPlus, FaTimes, FaTrash } from "react-icons/fa";
 import Card from "../../components/Card";
 import CreatePost from "../../components/create-post";
 import Post from "../../components/Post";
 import Swal from "sweetalert2"; // Importar SweetAlert2
- 
+
 // Imágenes
 import user14 from "../../assets/images/user/06.jpg";
 import user15 from "../../assets/images/user/07.jpg";
@@ -20,19 +20,19 @@ import busImg from "../../assets/images/page-img/bus.webp";
 import img11 from "../../assets/images/page-img/fd.webp";
 import mountain from "../../assets/images/page-img/mountain.webp";
 import pizza from "../../assets/images/page-img/pizza.webp";
- 
+
 // FsLightbox
 import ReactFsLightbox from "fslightbox-react";
- 
+
 const FsLightbox = ReactFsLightbox.default
   ? ReactFsLightbox.default
   : ReactFsLightbox;
- 
+
 const SuggestionsList = () => {
   const [users, setUsers] = useState([]);
   const auth = getAuth();
   const currentUser = auth.currentUser;
- 
+
   useEffect(() => {
     const usersCollection = collection(db, "users");
     const unsubscribe = onSnapshot(usersCollection, (snapshot) => {
@@ -42,17 +42,17 @@ const SuggestionsList = () => {
           ...doc.data(),
         }))
         .filter((user) => user.uid !== currentUser?.uid && user.role !== "admin"); // Excluir al usuario actual y a los administradores
- 
+
       const randomUsers = usersList
         .sort(() => 0.5 - Math.random())
         .slice(0, 3);
- 
+
       setUsers(randomUsers);
     });
- 
+
     return () => unsubscribe();
   }, [currentUser]);
- 
+
   // Función para verificar si ya se ha enviado una solicitud de seguimiento
   const checkIfFollowRequestExists = async (fromUid, toUid) => {
     const followRequestsCollection = collection(db, "followRequests");
@@ -62,11 +62,11 @@ const SuggestionsList = () => {
       where("to", "==", toUid),
       where("status", "==", "pending")
     );
- 
+
     const querySnapshot = await getDocs(q);
     return !querySnapshot.empty; // Si hay algún resultado, significa que ya existe una solicitud
   };
- 
+
   // Función para enviar solicitud de seguimiento
   const handleSendFollowRequest = async (userUid) => {
     if (!currentUser) {
@@ -78,7 +78,7 @@ const SuggestionsList = () => {
       });
       return;
     }
- 
+
     // Verificar si el usuario está intentando enviarse una solicitud a sí mismo
     if (currentUser.uid === userUid) {
       Swal.fire({
@@ -89,7 +89,7 @@ const SuggestionsList = () => {
       });
       return;
     }
- 
+
     // Verificar si ya existe una solicitud de seguimiento
     const requestExists = await checkIfFollowRequestExists(currentUser.uid, userUid);
     if (requestExists) {
@@ -101,7 +101,7 @@ const SuggestionsList = () => {
       });
       return;
     }
- 
+
     try {
       // Enviar la solicitud de seguimiento
       await addDoc(collection(db, "followRequests"), {
@@ -126,12 +126,12 @@ const SuggestionsList = () => {
       });
     }
   };
- 
+
   // Función para eliminar el usuario de la lista
   const handleRemoveUser = (userUid) => {
     setUsers((prevUsers) => prevUsers.filter((user) => user.uid !== userUid));
   };
- 
+
   return (
     <Card>
       <div className="card-header d-flex justify-content-between">
@@ -183,10 +183,10 @@ const SuggestionsList = () => {
     </Card>
   );
 };
- 
+
 const AdminSuggestionsList = () => {
   const [users, setUsers] = useState([]);
- 
+
   useEffect(() => {
     const usersCollection = collection(db, "users");
     const unsubscribe = onSnapshot(usersCollection, (snapshot) => {
@@ -195,18 +195,90 @@ const AdminSuggestionsList = () => {
           id: doc.id,
           ...doc.data(),
         }))
-        .filter((user) => user.role === "admin");
- 
+        .filter((user) => user.reported === true); // Filtrar usuarios reportados
+
       const randomUsers = usersList
         .sort(() => 0.5 - Math.random())
         .slice(0, 3);
- 
+
       setUsers(randomUsers);
     });
- 
+
     return () => unsubscribe();
   }, []);
- 
+
+  // Función para eliminar un usuario junto con sus posts y su autenticación
+  const handleDeleteUserAndPosts = async (userUid) => {
+    try {
+      // Obtener todos los posts relacionados con el usuario
+      const postsQuery = query(collection(db, "posts"), where("user.uid", "==", userUid));
+      const postsSnapshot = await getDocs(postsQuery);
+
+      // Eliminar cada post individualmente
+      const deletePostsPromises = postsSnapshot.docs.map(async (postDoc) => {
+        await deleteDoc(doc(db, "posts", postDoc.id));
+      });
+
+      // Eliminar el usuario de Firestore
+      const userDocRef = doc(db, "users", userUid);
+      await deleteDoc(userDocRef);
+
+      // Esperar a que todas las publicaciones sean eliminadas antes de proceder
+      await Promise.all(deletePostsPromises);
+
+      // Eliminar la autenticación del usuario
+      const auth = getAuth();
+      const user = auth.currentUser;
+
+      if (user && user.uid === userUid) {
+        await deleteUser(user);
+      }
+
+      Swal.fire({
+        title: "User and Posts Deleted",
+        text: "The user, all related posts, and the user authentication have been successfully deleted.",
+        icon: "success",
+        confirmButtonText: "OK",
+      });
+
+      // Eliminar el usuario de la lista de sugerencias
+      setUsers((prevUsers) => prevUsers.filter((user) => user.uid !== userUid));
+    } catch (error) {
+      console.error("Error deleting user, posts, and authentication:", error);
+      Swal.fire({
+        title: "Error",
+        text: "There was an error deleting the user, posts, and authentication. Please try again.",
+        icon: "error",
+        confirmButtonText: "OK",
+      });
+    }
+  };
+
+  // Función para dejar de reportar un usuario
+  const handleUnreportUser = async (userUid) => {
+    try {
+      const userDocRef = doc(db, "users", userUid);
+      await updateDoc(userDocRef, { reported: false });
+
+      Swal.fire({
+        title: "User Unreported",
+        text: "The user has been successfully unreported.",
+        icon: "success",
+        confirmButtonText: "OK",
+      });
+
+      setUsers((prevUsers) => prevUsers.filter((user) => user.uid !== userUid));
+    } catch (error) {
+      console.error("Error unreporting user:", error);
+      Swal.fire({
+        title: "Error",
+        text: "There was an error unreporting the user. Please try again.",
+        icon: "error",
+        confirmButtonText: "OK",
+      });
+    }
+  };
+
   return (
     <Card>
       <div className="card-header d-flex justify-content-between">
@@ -237,10 +309,16 @@ const AdminSuggestionsList = () => {
                   </div>
                 </div>
                 <div className="d-flex align-items-center flex-shrink-0 gap-2">
-                  <button className="btn btn-primary-subtle p-1 lh-1">
-                    <FaPlus className="font-size-14" />
+                  <button
+                    className="btn btn-primary-subtle p-1 lh-1"
+                    onClick={() => handleDeleteUserAndPosts(user.uid)}
+                  >
+                    <FaTrash className="font-size-14" />
                   </button>
-                  <button className="btn btn-danger-subtle p-1 lh-1">
+                  <button
+                    className="btn btn-danger-subtle p-1 lh-1"
+                    onClick={() => handleUnreportUser(user.uid)}
+                  >
                     <FaTimes className="font-size-14" />
                   </button>
                 </div>
@@ -252,7 +330,7 @@ const AdminSuggestionsList = () => {
     </Card>
   );
 };
- 
+
 const Index = () => {
   const [posts, setPosts] = useState([]);
   const [loadContent, setLoadContent] = useState(true);
@@ -262,21 +340,21 @@ const Index = () => {
   });
   const [isReportChecked, setIsReportChecked] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
- 
+
   useEffect(() => {
     const auth = getAuth();
     const user = auth.currentUser;
- 
+
     if (user && user.uid === "5C2Fj2rimGQeQK9HxG4Z7VDjlJl2") {
       setIsAdmin(true);
     }
   }, []);
- 
+
   // Obtener los posts en tiempo real desde Firebase, ordenados por createdAt
   useEffect(() => {
     const postsCollection = collection(db, "posts");
     const postsQuery = query(postsCollection, orderBy("createdAt", "desc"));
- 
+
     const unsubscribe = onSnapshot(postsQuery, (snapshot) => {
       const postsList = snapshot.docs.map((doc) => ({
         id: doc.id,
@@ -284,10 +362,10 @@ const Index = () => {
       }));
       setPosts(postsList);
     });
- 
+
     return () => unsubscribe();
   }, []);
- 
+
   useEffect(() => {
     function handleScroll() {
       if (window.innerHeight + window.scrollY >= document.body.offsetHeight) {
@@ -296,32 +374,32 @@ const Index = () => {
         }, 2000);
       }
     }
- 
+
     window.addEventListener("scroll", handleScroll);
- 
+
     return () => {
       window.removeEventListener("scroll", handleScroll);
     };
   }, []);
- 
+
   function imageOnSlide(number) {
     setImageController({
       toggler: !imageController.toggler,
       slide: number,
     });
   }
- 
+
   // Manejador de clics para los posts
   const handlePostClick = (postId) => {
     console.log("Post ID:", postId);
   };
- 
+
   const handleCheckboxChange = () => {
     setIsReportChecked(!isReportChecked);
   };
- 
+
   const postFiltered = posts.filter((post) => post.reported === true);
- 
+
   return (
     <>
       <div id="content-page" className="content-inner">
@@ -339,7 +417,7 @@ const Index = () => {
                     <CreatePost className="card-block card-stretch card-height" />
                   </Col>
                 </Row>
- 
+
                 {isAdmin && (
                   <div className="mb-3">
                     <label>
@@ -352,7 +430,7 @@ const Index = () => {
                     </label>
                   </div>
                 )}
- 
+
                 <Row className="special-post-container">
                   {isReportChecked
                     ? postFiltered.map((post) => (
@@ -385,7 +463,7 @@ const Index = () => {
                           onPostClick={handlePostClick}
                         />
                       ))}
- 
+
                   {loadContent && (
                     <div className="col-sm-12 text-center">
                       <img
@@ -398,7 +476,7 @@ const Index = () => {
                 </Row>
               </div>
             </Col>
- 
+
             <Col lg={4}>
               <div className="fixed-suggestion mb-0 mb-lg-4">
                 {isAdmin ? <AdminSuggestionsList /> : <SuggestionsList />}
@@ -410,5 +488,5 @@ const Index = () => {
     </>
   );
 };
- 
-export default Index
+
+export default Index;

@@ -1,5 +1,5 @@
-import React from 'react'
-import { Card, Container, Row, Col } from 'react-bootstrap'
+import React from 'react';
+import { Card, Container, Row, Col } from 'react-bootstrap';
 
 const PrivacyPolicy = () => {
     return (
@@ -11,99 +11,43 @@ const PrivacyPolicy = () => {
                             <Card>
                                 <Card.Header className="d-flex justify-content-between pb-0">
                                     <div className="header-title">
-                                        <h4 className="card-title">What is Lorem Ipsum?</h4>
+                                        <h4 className="card-title">Privacy Policy</h4>
                                     </div>
                                 </Card.Header>
                                 <Card.Body>
-                                    <p>Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum.</p>
+                                    <h5>Introduction</h5>
+                                    <p>
+                                        Our project is a web application that combines Spotify's music streaming service with social network features, allowing users to share their musical activities and interact with others. The application is developed using React for the user interface and Firebase for data storage. Users can log in using their Spotify accounts, allowing access to their music history, playlists, and favorite artists.
+                                    </p>
+
+                                    <h5>Collection and Use of Data</h5>
+                                    <p>
+                                        We collect authentication data, musical activity, playlists, and user preferences. This information is used to personalize the user experience and offer music recommendations based on friends' activity and the community.
+                                    </p>
+
+                                    <h5>Security and Storage</h5>
+                                    <p>
+                                        All data is securely stored in Firebase, which adheres to security standards to protect user information. We implement secure authentication measures and data protection, following privacy regulations.
+                                    </p>
+
+                                    <h5>Social Features</h5>
+                                    <p>
+                                        Our application allows social interaction through features such as following other users, sharing music, and commenting on posts. These features are designed to enhance users' musical experience and facilitate the discovery of new music.
+                                    </p>
+
+                                    <h5>User Rights</h5>
+                                    <p>
+                                        Users have control over their information and can manage their privacy preferences and share content as they wish. The data collected is used exclusively to improve the user experience within the application.
+                                    </p>
                                 </Card.Body>
                             </Card>
-                            <Card>
-                                <Card.Header className="d-flex justify-content-between pb-0">
-                                    <div className="header-title">
-                                        <h4 className="card-title">Why do we use it?</h4>
-                                    </div>
-                                </Card.Header>
-                                <Card.Body>
-                                    <p>It is a long established fact that a reader will be distracted by the readable content of a page when looking at its layout. The point of using Lorem Ipsum is that it has a more-or-less normal distribution of letters, as opposed to using 'Content here, content here', making it look like readable English. Many desktop publishing packages and web page editors now use Lorem Ipsum as their default model text, and a search for 'lorem ipsum' will uncover many web sites still in their infancy. Various versions have evolved over the years, sometimes by accident, sometimes on purpose (injected humour and the like).  </p>
-                                </Card.Body>
-                            </Card>
-                            <Card>
-                                <Card.Header className="d-flex justify-content-between pb-0">
-                                    <div className="header-title">
-                                        <h4 className="card-title">Where does it come from?</h4>
-                                    </div>
-                                </Card.Header>
-                                <Card.Body>
-                                    <p>It is a long established fact that a reader will be distracted by the readable content of a page when looking at its layout. The point of using Lorem Ipsum is that it has a more-or-less normal distribution of letters, as opposed to using 'Content here, content here', making it look like readable English. Many desktop publishing packages and web page editors now use Lorem Ipsum as their default model text, and a search for 'lorem ipsum' will uncover many web sites still in their infancy. Various versions have evolved over the years, sometimes by accident, sometimes on purpose (injected humour and the like).</p>
-                                </Card.Body>
-                            </Card>
-                            <Card>
-                                <Card.Header className="d-flex justify-content-between pb-0">
-                                    <div className="header-title">
-                                        <h4 className="card-title">Where can I get some?</h4>
-                                    </div>
-                                </Card.Header>
-                                <Card.Body>
-                                    <p>It is a long established fact that a reader will be distracted by the readable content of a page when looking at its layout. The point of using Lorem Ipsum is that it has a more-or-less normal distribution of letters, as opposed to using 'Content here, content here', making it look like readable English. Many desktop publishing packages and web page editors now use Lorem Ipsum as their default model text, and a search for 'lorem ipsum' will uncover many web sites still in their infancy. Various versions have evolved over the years, sometimes by accident, sometimes on purpose (injected humour and the like).</p>
-                                </Card.Body>
-                            </Card>
-                            <Card>
-                                <Card.Header className="d-flex justify-content-between pb-0">
-                                    <div className="header-title">
-                                        <h4 className="card-title">Why do we use it?</h4>
-                                    </div>
-                                </Card.Header>
-                                <Card.Body>
-                                    <p>It is a long established fact that a reader will be distracted by the readable content of a page when looking at its layout. The point of using Lorem Ipsum is that it has a more-or-less normal distribution of letters, as opposed to using 'Content here, content here', making it look like readable English. Many desktop publishing packages and web page editors now use Lorem Ipsum as their default model text, and a search for 'lorem ipsum' will uncover many web sites still in their infancy. Various versions have evolved over the years, sometimes by accident, sometimes on purpose (injected humour and the like).</p>
-                                </Card.Body>
-                            </Card>
-                            <Card>
-                                <Card.Header className="d-flex justify-content-between pb-0">
-                                    <div className="header-title">
-                                        <h4 className="card-title">Why do we use it?</h4>
-                                    </div>
-                                </Card.Header>
-                                <Card.Body>
-                                    <p>It is a long established fact that a reader will be distracted by the readable content of a page when looking at its layout. The point of using Lorem Ipsum is that it has a more-or-less normal distribution of letters, as opposed to using 'Content here, content here', making it look like readable English. Many desktop publishing packages and web page editors now use Lorem Ipsum as their default model text, and a search for 'lorem ipsum' will uncover many web sites still in their infancy. Various versions have evolved over the years, sometimes by accident, sometimes on purpose (injected humour and the like).</p>
-                                </Card.Body>
-                            </Card>
-                            <Card>
-                                <Card.Header className="d-flex justify-content-between pb-0">
-                                    <div className="header-title">
-                                        <h4 className="card-title">Why do we use it?</h4>
-                                    </div>
-                                </Card.Header>
-                                <Card.Body>
-                                    <p>It is a long established fact that a reader will be distracted by the readable content of a page when looking at its layout. The point of using Lorem Ipsum is that it has a more-or-less normal distribution of letters, as opposed to using 'Content here, content here', making it look like readable English. Many desktop publishing packages and web page editors now use Lorem Ipsum as their default model text, and a search for 'lorem ipsum' will uncover many web sites still in their infancy. Various versions have evolved over the years, sometimes by accident, sometimes on purpose (injected humour and the like).</p>
-                                </Card.Body>
-                            </Card>
-                            <Card>
-                                <Card.Header className="d-flex justify-content-between pb-0">
-                                    <div className="header-title">
-                                        <h4 className="card-title">Why do we use it?</h4>
-                                    </div>
-                                </Card.Header>
-                                <Card.Body>
-                                    <p>It is a long established fact that a reader will be distracted by the readable content of a page when looking at its layout. The point of using Lorem Ipsum is that it has a more-or-less normal distribution of letters, as opposed to using 'Content here, content here', making it look like readable English. Many desktop publishing packages and web page editors now use Lorem Ipsum as their default model text, and a search for 'lorem ipsum' will uncover many web sites still in their infancy. Various versions have evolved over the years, sometimes by accident, sometimes on purpose (injected humour and the like).</p>
-                                </Card.Body>
-                            </Card>
-                            <Card>
-                                <Card.Header className="d-flex justify-content-between pb-0">
-                                    <div className="header-title">
-                                        <h4 className="card-title">Why do we use it?</h4>
-                                    </div>
-                                </Card.Header>
-                                <Card.Body>
-                                    <p>It is a long established fact that a reader will be distracted by the readable content of a page when looking at its layout. The point of using Lorem Ipsum is that it has a more-or-less normal distribution of letters, as opposed to using 'Content here, content here', making it look like readable English. Many desktop publishing packages and web page editors now use Lorem Ipsum as their default model text, and a search for 'lorem ipsum' will uncover many web sites still in their infancy. Various versions have evolved over the years, sometimes by accident, sometimes on purpose (injected humour and the like).  </p>
-                                </Card.Body>
-                            </Card>
+                            
                         </Col>
                     </Row>
                 </Container>
             </div>
         </>
-    )
-}
+    );
+};
 
-export default PrivacyPolicy
+export default PrivacyPolicy;
