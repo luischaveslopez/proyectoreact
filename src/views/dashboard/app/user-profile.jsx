@@ -1,21 +1,14 @@
 import React, { useEffect, useState } from "react";
-import {
-  Row,
-  Col,
-  Container,
-  Dropdown,
-  Nav,
-  Tab,
-} from "react-bootstrap";
+import { Row, Col, Container, Dropdown, Nav, Tab } from "react-bootstrap";
 import { getAuth } from "firebase/auth";
-import { doc, getDoc, collection, query, where, onSnapshot } from "firebase/firestore"; // Importar las funciones correctamente
-import { db } from '../../../config/firebase'; // Asegúrate de que la ruta sea correcta
+import { doc, getDoc, collection, query, where, onSnapshot } from "firebase/firestore"; 
+import { db } from '../../../config/firebase'; 
 import Card from "../../../components/Card";
 import CreatePost from "../../../components/create-post";
 import Post from "../../../components/Post";
 import { Link } from "react-router-dom";
 import ReactFsLightbox from "fslightbox-react";
-import Swal from "sweetalert2"; // Importación de SweetAlert2
+import Swal from "sweetalert2";
 
 // images
 import img1 from "../../../assets/images/page-img/fun.webp";
@@ -26,7 +19,6 @@ import user07 from "../../../assets/images/user/07.jpg";
 import user08 from "../../../assets/images/user/08.jpg";
 import user09 from "../../../assets/images/user/09.jpg";
 import user10 from "../../../assets/images/user/10.jpg";
-
 import g1 from "../../../assets/images/page-img/g1.jpg";
 import g2 from "../../../assets/images/page-img/g2.jpg";
 import g3 from "../../../assets/images/page-img/g3.jpg";
@@ -36,7 +28,6 @@ import g6 from "../../../assets/images/page-img/g6.jpg";
 import g7 from "../../../assets/images/page-img/g7.jpg";
 import g8 from "../../../assets/images/page-img/g8.jpg";
 import g9 from "../../../assets/images/page-img/g9.jpg";
-
 import img51 from "../../../assets/images/page-img/51.jpg";
 import img52 from "../../../assets/images/page-img/52.jpg";
 import img53 from "../../../assets/images/page-img/53.jpg";
@@ -49,10 +40,9 @@ import img59 from "../../../assets/images/page-img/59.jpg";
 import img60 from "../../../assets/images/page-img/60.jpg";
 import img61 from "../../../assets/images/page-img/61.jpg";
 import img62 from "../../../assets/images/page-img/62.jpg";
+import img63 from "../../../assets/images/page-img/63.jpg";
 import img64 from "../../../assets/images/page-img/64.jpg";
 import img65 from "../../../assets/images/page-img/65.jpg";
-import img63 from "../../../assets/images/page-img/63.jpg";
-
 import mountain from "../../../assets/images/page-img/mountain.webp";
 import pizza from "../../../assets/images/page-img/pizza.webp";
 import busImg from "../../../assets/images/page-img/bus.webp";
@@ -60,24 +50,22 @@ import boyImg from "../../../assets/images/page-img/boy.webp";
 import img11 from "../../../assets/images/page-img/fd.webp";
 
 // Fslightbox plugin
-const FsLightbox = ReactFsLightbox.default
-  ? ReactFsLightbox.default
-  : ReactFsLightbox;
+const FsLightbox = ReactFsLightbox.default ? ReactFsLightbox.default : ReactFsLightbox;
 
 const UserProfile = () => {
-
   const [posts, setPosts] = useState(0); // Para el número de posts
   const [followers, setFollowers] = useState(0); // Para el número de seguidores
   const [following, setFollowing] = useState(0); // Para el número de seguidos
   const [userPosts, setUserPosts] = useState([]);
-  const [userName, setUserName] = useState(''); // Estado para el nombre del usuario
-  const [userCountry, setUserCountry] = useState(''); // Estado para el país del usuario
-  const [userWebsite, setUserWebsite] = useState(''); // Estado para el link de la página web
+  const [userName, setUserName] = useState(''); 
+  const [userCountry, setUserCountry] = useState('');
+  const [userWebsite, setUserWebsite] = useState('');
   const [tiktokLink, setTiktokLink] = useState('');
   const [spotifyLink, setSpotifyLink] = useState('');
   const [instagramLink, setInstagramLink] = useState('');
-  const [profilePic, setProfilePic] = useState(user1); // Estado para la foto de perfil con imagen por defecto
-  const [aboutData, setAboutData] = useState([]); // Estado para los datos de "about"
+  const [profilePic, setProfilePic] = useState(user1); 
+  const [aboutData, setAboutData] = useState([]); 
+  const [followingUsers, setFollowingUsers] = useState([]); // Almacena los usuarios que sigue
 
   const auth = getAuth();
   const user = auth.currentUser;
@@ -103,7 +91,7 @@ const UserProfile = () => {
   useEffect(() => {
     if (user) {
       const unsubscribe = fetchUserPosts(user.uid);
-      return () => unsubscribe(); // Cleanup on component unmount
+      return () => unsubscribe();
     }
   }, [user]);
 
@@ -141,10 +129,10 @@ const UserProfile = () => {
             setInstagramLink(data.instagramLink || '');
             setProfilePic(data.profilePic || user1);
 
-            // Establece los valores de posts, followers y following
+            // Establece los valores de posts, appFollowers y appFollowing
             setPosts(data.posts || 0);
-            setFollowers(data.followers || 0);
-            setFollowing(data.following || 0);
+            setFollowers(data.appFollowers?.length || 0); 
+            setFollowing(data.appFollowing?.length || 0); 
 
             const newAboutData = [
               { title: 'About Me:', data: data.aboutMe || 'No data yet' },
@@ -154,8 +142,32 @@ const UserProfile = () => {
               { title: "Gender:", data: data.gender || 'No data yet' }
             ];
             setAboutData(newAboutData);
+
+            // Fetch the following users
+            const followsQuery = query(
+              collection(db, "follows"),
+              where("from", "==", user.uid)
+            );
+            const unsubscribe = onSnapshot(followsQuery, async (snapshot) => {
+              const followingRefs = snapshot.docs.map((doc) => doc.data().to);
+
+              if (followingRefs.length > 0) {
+                const usersQuery = query(
+                  collection(db, "users"),
+                  where("uid", "in", followingRefs)
+                );
+                onSnapshot(usersQuery, (userSnapshot) => {
+                  const users = userSnapshot.docs.map((doc) => ({
+                    id: doc.id,
+                    ...doc.data(),
+                  }));
+                  setFollowingUsers(users); // Guardar los usuarios seguidos
+                });
+              }
+            });
+
+            return () => unsubscribe();
           } else {
-            // Usuario nuevo o sin datos
             setUserName('User');
             setUserCountry('No country available');
             setUserWebsite('');
@@ -186,7 +198,6 @@ const UserProfile = () => {
           ];
           setAboutData(newAboutData);
 
-          // Mensaje de error usando SweetAlert2
           Swal.fire({
             icon: 'error',
             title: 'Oops...',
@@ -205,66 +216,15 @@ const UserProfile = () => {
         <FsLightbox
           toggler={imageController.toggler}
           sources={[
-            g1,
-            g2,
-            g3,
-            g4,
-            g5,
-            g6,
-            g7,
-            g8,
-            g9,
-            img1,
-            boyImg,
-            busImg,
-            img11,
-            mountain,
-            pizza,
-            img51,
-            img52,
-            img53,
-            img54,
-            img55,
-            img56,
-            img57,
-            img58,
-            img59,
-            img60,
-            img61,
-            img62,
-            img63,
-            img64,
-            img65,
-            img51,
-            img52,
-            img53,
-            img54,
-            img55,
-            img56,
-            img57,
-            img58,
-            img51,
-            img52,
-            img53,
-            img54,
-            img55,
-            img56,
-            img57,
-            img58,
-            img59,
-            img60,
+            g1, g2, g3, g4, g5, g6, g7, g8, g9, img1, boyImg, busImg, img11, mountain, pizza,
+            img51, img52, img53, img54, img55, img56, img57, img58, img59, img60, img61, img62, img63, img64, img65
           ]}
           slide={imageController.slide}
         />
         <Container className="position-relative p-0">
-          <div
-            className="header-cover-img"
-            style={{
-              backgroundImage: `url(${"https://i.imgur.com/0LORAZB.png"})`,
-              backgroundSize: "cover",
-              backgroundRepeat: "no-repeat",
-            }}
-          ></div>
+          <div className="header-cover-img"
+            style={{ backgroundImage: `url(${"https://i.imgur.com/0LORAZB.png"})`, backgroundSize: "cover", backgroundRepeat: "no-repeat" }}>
+          </div>
         </Container>
         <Container>
           <Row>
@@ -278,8 +238,8 @@ const UserProfile = () => {
                           <ul className="social-data-block d-flex align-items-center justify-content-center list-inline p-0 m-0">
                             <li className="text-center pe-3">
                               <Link
-                                to={tiktokLink || "#"} // Redirige al enlace de TikTok o a "#" si no hay enlace
-                                target={tiktokLink ? "_blank" : "_self"} // Solo abre en nueva pestaña si hay enlace
+                                to={tiktokLink || "#"}
+                                target={tiktokLink ? "_blank" : "_self"}
                                 rel="noopener noreferrer"
                                 onClick={() => {
                                   if (!tiktokLink) {
@@ -360,7 +320,7 @@ const UserProfile = () => {
                       <Col lg={4} className="text-center profile-center">
                         <div className="header-avatar position-relative d-inline-block">
                           <img
-                            src={profilePic} // Usar la URL de la foto de perfil o la imagen por defecto
+                            src={profilePic} 
                             alt="user"
                             className="avatar-150 border border-4 border-white rounded-3"
                           />
@@ -388,9 +348,9 @@ const UserProfile = () => {
                               globe_asia
                             </h6>
                             <Link
-                              to={userWebsite ? userWebsite : "#"} // Si no hay link, usa "#" como placeholder
+                              to={userWebsite ? userWebsite : "#"}
                               className="font-size-14 fw-500 text-body"
-                              target={userWebsite ? "_blank" : "_self"} // Abre en una nueva pestaña si hay link
+                              target={userWebsite ? "_blank" : "_self"}
                               rel="noopener noreferrer"
                             >
                               {userWebsite ? userWebsite : "No website link available"}
@@ -400,9 +360,6 @@ const UserProfile = () => {
                       </Col>
                       <Col lg={4} className="profile-right">
                         <ul className="user-meta list-inline p-0 d-flex align-items-center justify-content-center">
-                          <li>
-                            <h5>{posts}</h5>Posts
-                          </li>
                           <li>
                             <h5>{followers}</h5>Followers
                           </li>
@@ -483,57 +440,34 @@ const UserProfile = () => {
                             <Card>
                               <div className="card-header d-flex justify-content-between border-bottom">
                                 <div className="header-title">
-                                  <h4 className="card-title">Friends</h4>
-                                </div>
-                                <div className="card-header-toolbar d-flex align-items-center">
-                                  <p className="m-0">
-                                    <Link to="javacsript:void();">Add New </Link>
-                                  </p>
+                                  <h4 className="card-title">Following</h4>
                                 </div>
                               </div>
                               <Card.Body>
                                 <div className="row row-cols-xl-3 row-cols-md-2 row-cols-2">
-                                  <div className="col mt-2 text-center">
-                                    <Link to="#"><img src={user05} alt="gallary-image" loading="lazy" className="img-fluid" /></Link>
-                                    <h6 className="mt-2 text-center">Anna Rexia</h6>
-                                  </div>
-                                  <div className="col mt-2 text-center">
-                                    <Link to="#"><img src={user06} alt="gallary-image" loading="lazy" className="img-fluid" /></Link>
-                                    <h6 className="mt-2 text-center">Tara Zona</h6>
-                                  </div>
-                                  <div className="col mt-2 text-center">
-                                    <Link to="#"><img src={user07} alt="gallary-image" loading="lazy" className="img-fluid" /></Link>
-                                    <h6 className="mt-2 text-center">Polly Tech</h6>
-                                  </div>
-                                  <div className="col mt-2 text-center">
-                                    <Link to="#"><img src={user08} alt="gallary-image" loading="lazy" className="img-fluid" /></Link>
-                                    <h6 className="mt-2 text-center">Bill Emia</h6>
-                                  </div>
-                                  <div className="col mt-2 text-center">
-                                    <Link to="#"><img src={user09} alt="gallary-image" loading="lazy" className="img-fluid" /></Link>
-                                    <h6 className="mt-2 text-center">Moe Fugga</h6>
-                                  </div>
-                                  <div className="col mt-2 text-center">
-                                    <Link to="#"><img src={user10} alt="gallary-image" loading="lazy" className="img-fluid" /></Link>
-                                    <h6 className="mt-2 text-center">Hal Appeno </h6>
-                                  </div>
-                                  <div className="col mt-2 text-center">
-                                    <Link to="#"><img src={user07} alt="gallary-image" loading="lazy" className="img-fluid" /></Link>
-                                    <h6 className="mt-2 text-center">Zack Lee</h6>
-                                  </div>
-                                  <div className="col mt-2 text-center">
-                                    <Link to="#"><img src={user06} alt="gallary-image" loading="lazy" className="img-fluid" /></Link>
-                                    <h6 className="mt-2 text-center">Terry Aki</h6>
-                                  </div>
-                                  <div className="col mt-2 text-center">
-                                    <Link to="#"><img src={user05} alt="gallary-image" loading="lazy" className="img-fluid" /></Link>
-                                    <h6 className="mt-2 text-center">Greta Life</h6>
-                                  </div>
+                                  {followingUsers.length > 0 ? (
+                                    followingUsers.map((user) => (
+                                      <div className="col mt-2 text-center" key={user.uid}>
+                                        <Link to={`/dashboard/app/friend-profile/${user.uid}`}>
+                                          <img
+                                            src={user.profilePic || user1}
+                                            alt="gallary-image"
+                                            className="img-fluid rounded"
+                                            style={{ objectFit: "cover" }}
+                                          />
+                                        </Link>
+                                        <h6 className="mt-2 text-center">{user.username || "Unknown User"}</h6>
+                                      </div>
+                                    ))
+                                  ) : (
+                                    <p>No following users found.</p>
+                                  )}
                                 </div>
                               </Card.Body>
                             </Card>
                           </div>
                         </Col>
+
                         <Col lg={8}>
                           <Row>
                             <Col sm={12}>
@@ -552,7 +486,7 @@ const UserProfile = () => {
                                       selectedItemInfo={post.selectedItemInfo}
                                       selectedItemType={post.selectedItemType}
                                       createdAt={post.createdAt}
-                                      comments={Array.isArray(post.comments) ? post.comments.length : 0} // Verificamos si `comments` es un array
+                                      comments={Array.isArray(post.comments) ? post.comments.length : 0}
                                       shares={post.shares || 0}
                                       onPostClick={() => console.log(`Clicked post: ${post.id}`)}
                                     />
@@ -569,10 +503,7 @@ const UserProfile = () => {
                   </Tab.Pane>
 
                   <Tab.Pane eventKey="second">
-                    <Tab.Container
-                      id="left-tabs-example"
-                      defaultActiveKey="about1"
-                    >
+                    <Tab.Container id="left-tabs-example" defaultActiveKey="about1">
                       <Row>
                         <Col md={4}>
                           <Card>
@@ -606,7 +537,7 @@ const UserProfile = () => {
                                               <td><h6>{item.title}</h6></td>
                                               <td><p className="mb-0">{item.data}</p></td>
                                             </tr>
-                                          )
+                                          );
                                         })}
                                       </tbody>
                                     </table>
@@ -617,195 +548,6 @@ const UserProfile = () => {
                           </Card>
                         </Col>
                       </Row>
-                    </Tab.Container>
-                  </Tab.Pane>
-                  <Tab.Pane eventKey="third">
-                    <Tab.Container
-                      id="left-tabs-example"
-                      defaultActiveKey="all-friends"
-                    >
-                      <Card>
-                        <Card.Body>
-                          <h2>Friends</h2>
-                          <div className="friend-list-tab mt-2">
-                            <Nav
-                              variant="pills"
-                              as="ul"
-                              className="d-flex align-items-center justify-content-left item-list-tabs p-0 mb-4"
-                            >
-                              <Nav.Item>
-                                <Nav.Link
-                                  href="#pill-all-friends"
-                                  eventKey="all-friends"
-                                >
-                                  All Friends
-                                </Nav.Link>
-                              </Nav.Item>
-                            </Nav>
-                            <Tab.Content>
-                              <Tab.Pane eventKey="all-friends">
-                                <Card.Body className="p-0">
-                                  <Row>
-                                    <div className="col-md-6 col-lg-6 mb-3">
-                                      <div className="iq-friendlist-block">
-                                        <div className="d-flex align-items-center justify-content-between">
-                                          <div className="d-flex align-items-center">
-                                            <Link to="#">
-                                              <img
-                                                loading="lazy"
-                                                src={user05}
-                                                alt="profile-img"
-                                                className="img-fluid"
-                                              />
-                                            </Link>
-                                            <div className="friend-info ms-3">
-                                              <h5>Petey Cruiser</h5>
-                                              <p className="mb-0">15 friends</p>
-                                            </div>
-                                          </div>
-                                          <div className="card-header-toolbar d-flex align-items-center">
-                                            <Dropdown>
-                                              <Dropdown.Toggle as="span" className="btn btn-secondary me-2 d-flex align-items-center">
-                                                <i className="material-symbols-outlined me-2">
-                                                  done
-                                                </i>
-                                                Follow
-                                              </Dropdown.Toggle>
-                                              <Dropdown.Menu className="dropdown-menu-right">
-                                                <Dropdown.Item href="#">
-                                                  Unfollow
-                                                </Dropdown.Item>
-                                                <Dropdown.Item href="#">
-                                                  Block
-                                                </Dropdown.Item>
-                                              </Dropdown.Menu>
-                                            </Dropdown>
-                                          </div>
-                                        </div>
-                                      </div>
-                                    </div>
-                                    <div className="col-md-6 col-lg-6 mb-3">
-                                      <div className="iq-friendlist-block">
-                                        <div className="d-flex align-items-center justify-content-between">
-                                          <div className="d-flex align-items-center">
-                                            <Link to="#">
-                                              <img
-                                                loading="lazy"
-                                                src={user06}
-                                                alt="profile-img"
-                                                className="img-fluid"
-                                              />
-                                            </Link>
-                                            <div className="friend-info ms-3">
-                                              <h5>Anna Sthesia</h5>
-                                              <p className="mb-0">50 friends</p>
-                                            </div>
-                                          </div>
-                                          <div className="card-header-toolbar d-flex align-items-center">
-                                            <Dropdown>
-                                              <Dropdown.Toggle as="span" className="btn btn-secondary me-2 d-flex align-items-center">
-                                                <i className="material-symbols-outlined me-2">
-                                                  done
-                                                </i>
-                                                Follow
-                                              </Dropdown.Toggle>
-                                              <Dropdown.Menu className="dropdown-menu-right">
-                                                <Dropdown.Item href="#">
-                                                  Unfollow
-                                                </Dropdown.Item>
-                                                <Dropdown.Item href="#">
-                                                  Block
-                                                </Dropdown.Item>
-                                              </Dropdown.Menu>
-                                            </Dropdown>
-                                          </div>
-                                        </div>
-                                      </div>
-                                    </div>
-
-                                    <div className="col-md-6 col-lg-6 mb-3">
-                                      <div className="iq-friendlist-block">
-                                        <div className="d-flex align-items-center justify-content-between">
-                                          <div className="d-flex align-items-center">
-                                            <Link to="#">
-                                              <img
-                                                loading="lazy"
-                                                src={user07}
-                                                alt="profile-img"
-                                                className="img-fluid"
-                                              />
-                                            </Link>
-                                            <div className="friend-info ms-3">
-                                              <h5>Paul Molive</h5>
-                                              <p className="mb-0">10 friends</p>
-                                            </div>
-                                          </div>
-                                          <div className="card-header-toolbar d-flex align-items-center">
-                                            <Dropdown>
-                                              <Dropdown.Toggle as="span" className="btn btn-secondary me-2 d-flex align-items-center">
-                                                <i className="material-symbols-outlined me-2">
-                                                  done
-                                                </i>
-                                                Follow
-                                              </Dropdown.Toggle>
-                                              <Dropdown.Menu className="dropdown-menu-right">
-                                                <Dropdown.Item href="#">
-                                                  Unfollow
-                                                </Dropdown.Item>
-                                                <Dropdown.Item href="#">
-                                                  Block
-                                                </Dropdown.Item>
-                                              </Dropdown.Menu>
-                                            </Dropdown>
-                                          </div>
-                                        </div>
-                                      </div>
-                                    </div>
-                                    <div className="col-md-6 col-lg-6 mb-3">
-                                      <div className="iq-friendlist-block">
-                                        <div className="d-flex align-items-center justify-content-between">
-                                          <div className="d-flex align-items-center">
-                                            <Link to="#">
-                                              <img
-                                                loading="lazy"
-                                                src={user08}
-                                                alt="profile-img"
-                                                className="img-fluid"
-                                              />
-                                            </Link>
-                                            <div className="friend-info ms-3">
-                                              <h5>Gail Forcewind</h5>
-                                              <p className="mb-0">20 friends</p>
-                                            </div>
-                                          </div>
-                                          <div className="card-header-toolbar d-flex align-items-center">
-                                            <Dropdown>
-                                              <Dropdown.Toggle as="span" className="btn btn-secondary me-2 d-flex align-items-center">
-                                                <i className="material-symbols-outlined me-2">
-                                                  done
-                                                </i>
-                                                Follow
-                                              </Dropdown.Toggle>
-                                              <Dropdown.Menu className="dropdown-menu-right">
-                                                <Dropdown.Item href="#">
-                                                  Unfollow
-                                                </Dropdown.Item>
-                                                <Dropdown.Item href="#">
-                                                  Block
-                                                </Dropdown.Item>
-                                              </Dropdown.Menu>
-                                            </Dropdown>
-                                          </div>
-                                        </div>
-                                      </div>
-                                    </div>
-                                  </Row>
-                                </Card.Body>
-                              </Tab.Pane>
-                            </Tab.Content>
-                          </div>
-                        </Card.Body>
-                      </Card>
                     </Tab.Container>
                   </Tab.Pane>
                 </Tab.Content>

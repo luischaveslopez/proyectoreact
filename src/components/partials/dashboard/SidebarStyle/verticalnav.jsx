@@ -86,7 +86,7 @@ const VerticalNav = React.memo(() => {
                                 people
                             </i>
                         </OverlayTrigger>
-                        <span className="item-name">Friends</span>
+                        <span className="item-name">Follows</span>
                         <i className="right-icon material-symbols-outlined">chevron_right</i>
                     </CustomToggle>
                     <Accordion.Collapse eventKey="friends-menu" >
@@ -104,10 +104,10 @@ const VerticalNav = React.memo(() => {
                                         fiber_manual_record
                                     </i>
 
-                                    <OverlayTrigger placement="right" overlay={<Tooltip>Friend List</Tooltip>}>
+                                    <OverlayTrigger placement="right" overlay={<Tooltip>Follow List</Tooltip>}>
                                         <i className="sidenav-mini-icon"> FL </i>
                                     </OverlayTrigger>
-                                    <span className="item-name">Friend List</span>
+                                    <span className="item-name">Follow List</span>
                                 </Link>
                             </Nav.Item>
                             <Nav.Item as="li">
@@ -115,10 +115,10 @@ const VerticalNav = React.memo(() => {
                                     <i className="icon material-symbols-outlined filled">
                                         fiber_manual_record
                                     </i>
-                                    <OverlayTrigger placement="right" overlay={<Tooltip>Friend Request</Tooltip>}>
+                                    <OverlayTrigger placement="right" overlay={<Tooltip>Follow Request</Tooltip>}>
                                         <i className="sidenav-mini-icon"> FR </i>
                                     </OverlayTrigger>
-                                    <span className="item-name">Friend Request</span>
+                                    <span className="item-name">Follow Request</span>
                                 </Link>
                             </Nav.Item>
                         </ul>

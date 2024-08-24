@@ -1,12 +1,13 @@
 import React, { useEffect, useState } from "react";
 import { Row, Col, Container } from "react-bootstrap";
-import { collection, onSnapshot, query, orderBy } from "firebase/firestore";
+import { collection, onSnapshot, query, where, getDocs, orderBy } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
 import { db } from "../../config/firebase";
 import { FaMapMarkerAlt, FaPlus, FaTimes } from "react-icons/fa";
 import Card from "../../components/Card";
 import CreatePost from "../../components/create-post";
 import Post from "../../components/Post";
+import Swal from "sweetalert2"; // Importamos SweetAlert2
 
 // Imágenes
 import user14 from "../../assets/images/user/06.jpg";
@@ -22,6 +23,7 @@ import pizza from "../../assets/images/page-img/pizza.webp";
 
 // FsLightbox
 import ReactFsLightbox from "fslightbox-react";
+import { sendFollowRequest } from "../../views/dashboard/app/followActions"; // Asegúrate de ajustar la ruta según tu estructura
 
 const FsLightbox = ReactFsLightbox.default
   ? ReactFsLightbox.default
@@ -49,6 +51,76 @@ const SuggestionsList = () => {
 
     return () => unsubscribe();
   }, []);
+
+  // Función para verificar si ya se ha enviado una solicitud de seguimiento
+  const checkIfFollowRequestExists = async (fromUid, toUid) => {
+    const followRequestsCollection = collection(db, "followRequests");
+    const q = query(
+      followRequestsCollection,
+      where("from", "==", fromUid),
+      where("to", "==", toUid),
+      where("status", "==", "pending")
+    );
+
+    const querySnapshot = await getDocs(q);
+    return !querySnapshot.empty; // Si hay algún resultado, significa que ya existe una solicitud
+  };
+
+  // Función para enviar solicitud de seguimiento
+  const handleSendFollowRequest = async (userUid) => {
+    const auth = getAuth();
+    const currentUser = auth.currentUser;
+    if (!currentUser) {
+      console.error("User not authenticated");
+      return;
+    }
+
+    // Verificar si el usuario está intentando enviarse una solicitud a sí mismo
+    if (currentUser.uid === userUid) {
+      Swal.fire({
+        title: "Error",
+        text: "You cannot send a follow request to yourself!",
+        icon: "error",
+        confirmButtonText: "OK",
+      });
+      return; // Evitamos que se envíe la solicitud
+    }
+
+    // Verificar si ya existe una solicitud de seguimiento
+    const requestExists = await checkIfFollowRequestExists(currentUser.uid, userUid);
+    if (requestExists) {
+      Swal.fire({
+        title: "Request already sent",
+        text: "A follow request has already been sent to this user.",
+        icon: "info",
+        confirmButtonText: "OK",
+      });
+      return; // Evitamos enviar una solicitud duplicada
+    }
+
+    try {
+      await sendFollowRequest(currentUser.uid, userUid);
+      Swal.fire({
+        title: "Request sent!",
+        text: "Your follow request has been sent successfully.",
+        icon: "success",
+        confirmButtonText: "OK",
+      });
+    } catch (error) {
+      console.error("Error sending follow request:", error);
+      Swal.fire({
+        title: "Error",
+        text: "There was an error sending the follow request. Please try again.",
+        icon: "error",
+        confirmButtonText: "OK",
+      });
+    }
+  };
+
+  // Función para eliminar el usuario de la lista
+  const handleRemoveUser = (userUid) => {
+    setUsers((prevUsers) => prevUsers.filter((user) => user.uid !== userUid));
+  };
 
   return (
     <Card>
@@ -80,10 +152,16 @@ const SuggestionsList = () => {
                   </div>
                 </div>
                 <div className="d-flex align-items-center flex-shrink-0 gap-2">
-                  <button className="btn btn-primary-subtle p-1 lh-1">
+                  <button
+                    className="btn btn-primary-subtle p-1 lh-1"
+                    onClick={() => handleSendFollowRequest(user.uid)}
+                  >
                     <FaPlus className="font-size-14" />
                   </button>
-                  <button className="btn btn-danger-subtle p-1 lh-1">
+                  <button
+                    className="btn btn-danger-subtle p-1 lh-1"
+                    onClick={() => handleRemoveUser(user.uid)}
+                  >
                     <FaTimes className="font-size-14" />
                   </button>
                 </div>

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Nav, Form, Card, Container, Image, Dropdown, Navbar } from "react-bootstrap";
 import { Link } from "react-router-dom";
 import { getAuth } from "firebase/auth";
-import { doc, getDoc } from "firebase/firestore";
+import { doc, onSnapshot } from "firebase/firestore";
 import { useSelector } from "react-redux";
 import { db } from "../../../../config/firebase";
 import SearchModal from "../../../search-modal";
@@ -27,12 +27,13 @@ const Header = () => {
   };
 
   useEffect(() => {
-    const fetchUserData = async () => {
-      const auth = getAuth();
-      const user = auth.currentUser;
+    const auth = getAuth();
+    const user = auth.currentUser;
 
-      if (user) {
-        const userDoc = await getDoc(doc(db, "users", user.uid));
+    if (user) {
+      // Escuchar en tiempo real los cambios del documento del usuario
+      const userRef = doc(db, "users", user.uid);
+      const unsubscribe = onSnapshot(userRef, (userDoc) => {
         if (userDoc.exists()) {
           const data = userDoc.data();
           setUserData(data);
@@ -40,25 +41,17 @@ const Header = () => {
         } else {
           console.log("No such document!");
         }
-      } else {
-        const storedUserData = localStorage.getItem("userData");
-        if (storedUserData) {
-          setUserData(JSON.parse(storedUserData));
-        }
+      });
+
+      // Limpiar la suscripción cuando el componente se desmonte
+      return () => unsubscribe();
+    } else {
+      const storedUserData = localStorage.getItem("userData");
+      if (storedUserData) {
+        setUserData(JSON.parse(storedUserData));
       }
-    };
-
-    fetchUserData();
+    }
   }, []);
-
-  const dropdownContent = document.querySelectorAll(".sub-drop");
-  if (dropdownContent) {
-    dropdownContent.forEach((element) => {
-      setTimeout(() => {
-        element.style = "";
-      }, 100);
-    });
-  }
 
   return (
     <>
@@ -75,10 +68,7 @@ const Header = () => {
                 className="d-flex align-items-center iq-header-logo navbar-brand d-block d-xl-none"
               >
                 <img src="https://i.postimg.cc/C5FqYncS/Untitled-design-3.png" width="50" alt="Jammify Logo" />
-                <h3
-                  className="logo-title d-none d-sm-block"
-                  data-setting="app_name"
-                >
+                <h3 className="logo-title d-none d-sm-block" data-setting="app_name">
                   {"Jammify"}
                 </h3>
               </Link>
@@ -90,8 +80,7 @@ const Header = () => {
                 to="#"
               >
                 <div className="icon material-symbols-outlined iq-burger-menu">
-                  {" "}
-                  menu{" "}
+                  {" "}menu{" "}
                 </div>
               </Link>
             </div>
@@ -127,10 +116,7 @@ const Header = () => {
                 >
                   <Link className="search-link" to="#">
                   </Link>
-                  <Link
-                    className="d-lg-none d-flex d-none d-lg-block"
-                    to="/"
-                  >
+                  <Link className="d-lg-none d-flex d-none d-lg-block" to="/">
                     <span className="material-symbols-outlined">search12</span>
                   </Link>
                 </Dropdown.Toggle>
@@ -218,9 +204,7 @@ const Header = () => {
                     {userData?.username || 'User'}
                   </span>
                 </Dropdown.Toggle>
-                <Dropdown.Menu
-                  className={`sub-drop caption-menu `}
-                >
+                <Dropdown.Menu className={`sub-drop caption-menu `}>
                   <Card className="shadow-none m-0">
                     <Card.Header>
                       <div className="header-title">
@@ -233,10 +217,7 @@ const Header = () => {
                           line_style
                         </span>
                         <div className="ms-3">
-                          <Link
-                            to="/dashboard/app/profile"
-                            className="mb-0 h6"
-                          >
+                          <Link to="/dashboard/app/profile" className="mb-0 h6">
                             My Profile
                           </Link>
                         </div>
@@ -279,13 +260,13 @@ const Header = () => {
           display: flex;
           justify-content: center;
           align-items: center;
-          border: 2px solid #fff; /* Optional: add a border for better visibility */
+          border: 2px solid #fff;
         }
 
         .user-avatar-container img {
           width: 100%;
           height: 100%;
-          object-fit: cover; /* Ensures the image covers the container without distortion */
+          object-fit: cover;
         }
       `}</style>
     </>

@@ -1,19 +1,17 @@
 import React, { useState, useEffect } from "react";
-import { Row, Col, Container, Dropdown } from "react-bootstrap";
+import { Row, Col, Container } from "react-bootstrap";
 import { collection, query, where, onSnapshot, getDocs } from "firebase/firestore";
-import { db } from '../../../config/firebase';
+import { auth, db } from '../../../config/firebase';
 import Card from "../../../components/Card";
+import { sendFollowRequest } from "../../../views/dashboard/app/followActions"; // Asegúrate de que la ruta sea correcta
+import Swal from "sweetalert2"; // Importamos SweetAlert2
 
-
-import CustomToggle from "../../../components/dropdowns";
 import { Link, useParams } from "react-router-dom";
 import ReactFsLightbox from "fslightbox-react";
-import ShareOffcanvas from "../../../components/share-offcanvas";
-import Post from "../../../components/Post"
+import Post from "../../../components/Post";
 
 // images
 import img1 from "../../../assets/images/page-img/fun.webp";
-// images
 import user1 from "../../../assets/images/user/11.png";
 import g1 from "../../../assets/images/page-img/g1.jpg";
 import g2 from "../../../assets/images/page-img/g2.jpg";
@@ -25,14 +23,13 @@ import g7 from "../../../assets/images/page-img/g7.jpg";
 import g8 from "../../../assets/images/page-img/g8.jpg";
 import g9 from "../../../assets/images/page-img/g9.jpg";
 
-
 // Fslightbox plugin
 const FsLightbox = ReactFsLightbox.default
   ? ReactFsLightbox.default
   : ReactFsLightbox;
 
 const FriendProfile = () => {
-  const { uid } = useParams(); // Obtiene el username desde la URL
+  const { uid } = useParams(); // Obtén el UID del usuario desde la URL
   const [userPosts, setUserPosts] = useState([]);
   const [userData, setUserData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -40,6 +37,8 @@ const FriendProfile = () => {
     toggler: false,
     slide: 1,
   });
+
+  const currentUserUid = auth.currentUser?.uid; // UID del usuario autenticado actual
 
   // Función para obtener los datos del amigo
   useEffect(() => {
@@ -50,12 +49,18 @@ const FriendProfile = () => {
 
         if (!querySnapshot.empty) {
           const doc = querySnapshot.docs[0];
-          setUserData(doc.data());
+          const data = doc.data();
+          setUserData({
+            ...data,
+            // Manejar los campos appFollowers y appFollowing correctamente
+            followers: data.appFollowers?.length || 0,
+            following: data.appFollowing?.length || 0,
+          });
 
-          // Ahora que tienes el uid del amigo, obtén sus posts
-          fetchUserPosts(doc.data().uid); // Llamada para obtener los posts del amigo
+          // Ahora que tienes el UID del amigo, obtén sus posts
+          fetchUserPosts(data.uid);
         } else {
-          console.error("No user found with the username:", uid);
+          console.error("No user found with the UID:", uid);
         }
       } catch (error) {
         console.error("Error fetching user data: ", error);
@@ -67,43 +72,104 @@ const FriendProfile = () => {
     fetchUserData();
   }, [uid]);
 
-// Función para obtener los posts del amigo en tiempo real
-    const fetchUserPosts = (uid) => {
-      const q = query(collection(db, "posts"), where("user.uid", "==", uid));
+  // Función para obtener los posts del amigo en tiempo real
+  const fetchUserPosts = (uid) => {
+    const q = query(collection(db, "posts"), where("user.uid", "==", uid));
 
-      // Usamos onSnapshot para escuchar cambios en tiempo real
-      const unsubscribe = onSnapshot(q, (querySnapshot) => {
-        const fetchedPosts = [];
-        querySnapshot.forEach((doc) => {
-          fetchedPosts.push({ id: doc.id, ...doc.data() });
-        });
-
-        // Ordenar los posts por fecha de creación (de más reciente a más antiguo)
-        const sortedPosts = fetchedPosts.sort(
-          (a, b) => b.createdAt.seconds - a.createdAt.seconds
-        );
-        setUserPosts(sortedPosts); // Guarda los posts en el estado
+    // Usamos onSnapshot para escuchar cambios en tiempo real
+    const unsubscribe = onSnapshot(q, (querySnapshot) => {
+      const fetchedPosts = [];
+      querySnapshot.forEach((doc) => {
+        fetchedPosts.push({ id: doc.id, ...doc.data() });
       });
 
-      // Retorna la función para detener la suscripción cuando el componente se desmonte
-      return unsubscribe;
-    };
+      // Ordenar los posts por fecha de creación (de más reciente a más antiguo)
+      const sortedPosts = fetchedPosts.sort(
+        (a, b) => b.createdAt.seconds - a.createdAt.seconds
+      );
+      setUserPosts(sortedPosts); // Guarda los posts en el estado
+    });
 
-    // useEffect para escuchar los cambios en tiempo real
-    useEffect(() => {
-      const unsubscribe = fetchUserPosts(uid);
-      return () => unsubscribe(); // Limpiar suscripción cuando se desmonte el componente
-    }, [uid]);
+    // Retorna la función para detener la suscripción cuando el componente se desmonte
+    return unsubscribe;
+  };
 
-    // Mientras cargan los datos
-    if (loading) {
-      return <div>Loading...</div>;
+  // useEffect para escuchar los cambios en tiempo real
+  useEffect(() => {
+    const unsubscribe = fetchUserPosts(uid);
+    return () => unsubscribe(); // Limpiar suscripción cuando se desmonte el componente
+  }, [uid]);
+
+  const handleSendFollowRequest = async () => {
+    if (!currentUserUid) {
+      Swal.fire({
+        title: "Error",
+        text: "User is not authenticated",
+        icon: "error",
+        confirmButtonText: "OK",
+      });
+      return;
     }
 
-    // Si no se encuentra el usuario
-    if (!userData) {
-      return <div>No user found</div>;
+    // Verificar si el usuario intenta seguirse a sí mismo
+    if (currentUserUid === userData.uid) {
+      Swal.fire({
+        title: "Error",
+        text: "You cannot follow yourself",
+        icon: "error",
+        confirmButtonText: "OK",
+      });
+      return; // Evita que el usuario se siga a sí mismo
     }
+
+    try {
+      // Verificar si ya existe una solicitud de seguimiento pendiente
+      const followRequestQuery = query(
+        collection(db, "followRequests"),
+        where("from", "==", currentUserUid),
+        where("to", "==", userData.uid),
+        where("status", "==", "pending")
+      );
+      const followRequestSnapshot = await getDocs(followRequestQuery);
+
+      if (!followRequestSnapshot.empty) {
+        Swal.fire({
+          title: "Request already sent",
+          text: "A follow request has already been sent to this user.",
+          icon: "info",
+          confirmButtonText: "OK",
+        });
+        return; // Si ya existe una solicitud, no enviamos otra
+      }
+
+      // Si no existe una solicitud, enviarla
+      await sendFollowRequest(currentUserUid, userData.uid);
+      Swal.fire({
+        title: "Success",
+        text: "Follow request sent successfully",
+        icon: "success",
+        confirmButtonText: "OK",
+      });
+    } catch (error) {
+      Swal.fire({
+        title: "Error",
+        text: "There was an error sending the follow request.",
+        icon: "error",
+        confirmButtonText: "OK",
+      });
+      console.error("Error sending follow request:", error);
+    }
+  };
+
+  // Mientras cargan los datos
+  if (loading) {
+    return <div>Loading...</div>;
+  }
+
+  // Si no se encuentra el usuario
+  if (!userData) {
+    return <div>No user found</div>;
+  }
 
   function imageOnSlide(number) {
     setImageController({
@@ -135,18 +201,14 @@ const FriendProfile = () => {
                           backgroundRepeat: "no-repeat",
                         }}
                       >
-                        <ul className="header-nav d-flex flex-wrap justify-end p-0 m-0">
-                          <li>
-                            <Link to="#" className="material-symbols-outlined">
-                              personadd
-                            </Link>
-                          </li>
-                          <li>
-                            <Link to="#" className="material-symbols-outlined">
-                              mail
-                            </Link>
-                          </li>
-                        </ul> 
+                        <button
+                          onClick={(e) => {
+                            e.preventDefault();
+                            handleSendFollowRequest();
+                          }}
+                        >
+                          send follow request
+                        </button>
                       </div>
                     </Container>
                     <div className="user-detail text-center mb-3">
@@ -207,11 +269,11 @@ const FriendProfile = () => {
                         </ul>
                       </div>
                       <div className="social-info">
-                        <ul className="social-data-block social-user-meta-list d-flex align-items-center justify-content-center list-inline p-0 m-0 gap-1">
-                          <li className="text-center">
+                        <ul className="social-data-block social-user-meta-list d-flex align-items-center justify-content-center list-inline p-0 m-0 gap-1" >
+                          {/*<li className="text-center">
                             <p className="mb-0">{userData.posts || 0}</p>
                             <h6>Posts</h6>
-                          </li>
+                          </li>*/}
                           <li className="text-center">
                             <p className="mb-0">{userData.followers || 0}</p>
                             <h6>Followers</h6>
@@ -264,14 +326,9 @@ const FriendProfile = () => {
                     </ul>
                   </Card.Body>
                 </Card>
-
-                
-                <div className="fixed-suggestion mb-0 mb-lg-4">
-                </div>
               </Col>
               <Col lg={8}>
-
-              <Row>
+                <Row>
                   {userPosts && userPosts.length > 0 ? (
                     userPosts.map((post) => (
                       <Col sm={12} className="special-post" key={post.id}>
@@ -294,7 +351,6 @@ const FriendProfile = () => {
                     <p>No posts available</p>
                   )}
                 </Row>
-        
               </Col>
             </Row>
           </Row>
