@@ -1,7 +1,7 @@
 import { doc, updateDoc } from './firebase/firestore';
 import {db} from './firebase';
 
-// ... createNotification function ...
+// funcion crear notificacion
 
 export async function markAsRead(userId, notificationId) {
   const notificationRef = doc(db, 'users', userId, 'notifications', notificationId);
