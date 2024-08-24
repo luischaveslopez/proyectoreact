@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Container, Row, Col } from "react-bootstrap";
 import Card from "../../../components/Card";
@@ -36,6 +36,7 @@ import ProfileHeader from "../../../components/profile-header";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Autoplay } from "swiper/modules";
 import SwiperCore from "swiper";
+
 // Import Swiper styles
 // import 'swiper/swiper-bundle.min.css'
 
@@ -43,121 +44,126 @@ import SwiperCore from "swiper";
 SwiperCore.use([Autoplay]);
 
 const Music = () => {
+  const [playlists, setPlaylists] = useState([]);
+  const [newMusic, setNewMusic] = useState([]);
+  const [recentAdded, setRecentAdded] = useState([]);
+  const [topMusic, setTopMusic] = useState([]);
+  const [currentPreview, setCurrentPreview] = useState(null);
+  const [playingTrackId, setPlayingTrackId] = useState(null);
+
+  useEffect(() => {
+    const fetchSpotifyData = async () => {
+      const token = localStorage.getItem("spotifyToken");
+      if (token) {
+        try {
+          const headers = {
+            Authorization: `Bearer ${token}`,
+          };
+
+          const fetchPlaylists = fetch(
+            "https://api.spotify.com/v1/browse/featured-playlists?limit=6",
+            { headers }
+          );
+          const fetchNewMusic = fetch(
+            "https://api.spotify.com/v1/browse/new-releases?limit=6",
+            { headers }
+          );
+          const fetchRecentAdded = fetch(
+            "https://api.spotify.com/v1/me/tracks?limit=6",
+            { headers }
+          );
+          const fetchTopMusic = fetch(
+            "https://api.spotify.com/v1/me/top/tracks?limit=6",
+            { headers }
+          );
+
+          const [playlistsRes, newMusicRes, recentAddedRes, topMusicRes] =
+            await Promise.all([
+              fetchPlaylists,
+              fetchNewMusic,
+              fetchRecentAdded,
+              fetchTopMusic,
+            ]);
+
+          const playlistsData = await playlistsRes.json();
+          const newMusicData = await newMusicRes.json();
+          const recentAddedData = await recentAddedRes.json();
+          const topMusicData = await topMusicRes.json();
+
+          setPlaylists(playlistsData.playlists.items);
+          setNewMusic(newMusicData.albums.items);
+          setRecentAdded(recentAddedData.items.map((item) => item.track));
+          setTopMusic(topMusicData.items);
+        } catch (error) {
+          console.error("Error fetching Spotify data", error);
+        }
+      }
+    };
+
+    fetchSpotifyData();
+  }, []);
+
+  const playPreview = (previewUrl, trackId) => {
+    if (currentPreview) {
+      currentPreview.pause();
+    }
+
+    if (previewUrl) {
+      const audio = new Audio(previewUrl);
+      audio.play();
+      setCurrentPreview(audio);
+      setPlayingTrackId(trackId);
+
+      audio.onended = () => {
+        setPlayingTrackId(null);
+      };
+    } else {
+      console.error("No preview available for this track.");
+    }
+  };
+
   return (
     <>
-      <ProfileHeader title="Music" img="{profilebg8}" />
+    
       <div id="content-page" className="content-inner">
         <Container>
           <Row>
             <Col md="4">
-              <Card className=" card-block card-stretch card-height">
-                <Card.Header className=" d-flex justify-content-between">
+              <Card className="card-block card-stretch card-height">
+                <Card.Header className="d-flex justify-content-between">
                   <div className="header-title">
                     <h4 className="card-title">Play Lists</h4>
                   </div>
                 </Card.Header>
                 <Card.Body className="pt-0">
                   <ul className="music-lists m-0 p-0">
-                    <li className="d-flex mb-4 align-items-center">
-                      <div className="user-img img-fluid">
-                        <img
-                          src={imgl1}
-                          alt="story-img"
-                          className="rounded-circle avatar-40"
-                        />
-                      </div>
-                      <div className="d-flex justify-content-between w-100">
-                        <div className="ms-3">
-                          <h6>Ember</h6>
+                    {playlists.map((playlist, index) => (
+                      <li key={index} className="d-flex mb-4 align-items-center">
+                        <div className="user-img img-fluid">
+                          <img
+                            src={playlist.images[0]?.url || imgl1}
+                            alt="playlist-img"
+                            className="rounded-circle avatar-40"
+                          />
                         </div>
-                        <div className="music-time">3:00</div>
-                      </div>
-                    </li>
-                    <li className="d-flex mb-4 align-items-center">
-                      <div className="user-img img-fluid">
-                        <img
-                          src={imgl2}
-                          alt="story-img"
-                          className="rounded-circle avatar-40"
-                        />
-                      </div>
-                      <div className="d-flex justify-content-between w-100">
-                        <div className="ms-3">
-                          <h6>Light Out(Bonus Track)</h6>
+                        <div className="d-flex justify-content-between w-100">
+                          <div className="ms-3">
+                            <h6>{playlist.name}</h6>
+                          </div>
+                          <div className="music-time">3:00</div>
                         </div>
-                        <div className="music-time">5:00</div>
-                      </div>
-                    </li>
-                    <li className="d-flex mb-4 align-items-center">
-                      <div className="user-img img-fluid">
-                        <img
-                          src={imgl3}
-                          alt="story-img"
-                          className="rounded-circle avatar-40"
-                        />
-                      </div>
-                      <div className="d-flex justify-content-between w-100">
-                        <div className="ms-3">
-                          <h6>Darkness Overture</h6>
-                        </div>
-                        <div className="music-time">2:30</div>
-                      </div>
-                    </li>
-                    <li className="d-flex mb-4 align-items-center">
-                      <div className="user-img img-fluid">
-                        <img
-                          src={imgl4}
-                          alt="story-img"
-                          className="rounded-circle avatar-40"
-                        />
-                      </div>
-                      <div className="d-flex justify-content-between w-100">
-                        <div className="ms-3">
-                          <h6>Dritin</h6>
-                        </div>
-                        <div className="music-time">4:20</div>
-                      </div>
-                    </li>
-                    <li className="d-flex mb-4 align-items-center">
-                      <div className="user-img img-fluid">
-                        <img
-                          src={imgl5}
-                          alt="story-img"
-                          className="rounded-circle avatar-40"
-                        />
-                      </div>
-                      <div className="d-flex justify-content-between w-100">
-                        <div className=" ms-3">
-                          <h6>Bones</h6>
-                        </div>
-                        <div className="music-time">1:45</div>
-                      </div>
-                    </li>
-                    <li className="d-flex align-items-center">
-                      <div className="user-img img-fluid">
-                        <img
-                          src={imgl6}
-                          alt="story-img"
-                          className="rounded-circle avatar-40"
-                        />
-                      </div>
-                      <div className="d-flex justify-content-between w-100">
-                        <div className="ms-3">
-                          <h6>Hozier</h6>
-                        </div>
-                        <div className="music-time">2:00</div>
-                      </div>
-                    </li>
+                      </li>
+                    ))}
                   </ul>
                 </Card.Body>
               </Card>
             </Col>
             <Col md="8">
-              <Card className=" card-block card-stretch card-height">
-                <Card.Body className=" p-0  ">
+              <Card className="card-block card-stretch card-height">
+                <Card.Body className="p-0">
                   <Link to="#">
                     <img
-                      src={img48}
+                      src={"https://dplnews.com/wp-content/uploads/2023/01/dplnews_spotify_mc31123.png"}
                       alt="story-img"
                       className="img-fluid rounded h-100 w-100"
                     />
@@ -201,146 +207,39 @@ const Music = () => {
                       },
                     }}
                   >
-                    <SwiperSlide className="text-center">
-                      <div className="music-thumbnail position-relative mb-3">
-                        <Link to="#">
-                          <img
-                            src={imgn1}
-                            alt="music-thumb"
-                            className="img-fluid w-100"
-                          />
-                        </Link>
-
-                        <div className="play-btn">
-                          <Link to="#" className="material-symbols-outlined text-white">play_arrow</Link>
+                    {newMusic.map((album, index) => (
+                      <SwiperSlide key={index} className="text-center">
+                        <div className="music-thumbnail position-relative mb-3">
+                          <Link
+                            to="#"
+                            onClick={() => playPreview(album.preview_url, album.id)}
+                          >
+                            <img
+                              src={album.images[0]?.url || imgn1}
+                              alt="album-thumb"
+                              className="img-fluid w-100"
+                            />
+                          </Link>
+                          <div className="play-btn">
+                            <Link
+                              to="#"
+                              className="material-symbols-outlined text-white"
+                            >
+                              play_arrow
+                            </Link>
+                          </div>
                         </div>
-                      </div>
-
-                      <h6>Sean Paul</h6>
-                      <p className="mb-0">Best Advice</p>
-                    </SwiperSlide>
-                    <SwiperSlide
-                      className="text-center"
-                      style={{ width: "176.8px", marginRight: "15px" }}
-                    >
-                      <div className="music-thumbnail position-relative mb-3">
-                        <Link to="#">
-                          <img
-                            src={imgn2}
-                            alt="music-thumb"
-                            className="img-fluid w-100"
-                          />
-                        </Link>
-                        <div className="play-btn">
-                          <Link to="#" className="material-symbols-outlined text-white">play_arrow</Link>
-                        </div>
-                      </div>
-                      <h6>Fetty Wap</h6>
-                      <p className="mb-0">Best Advice</p>
-                    </SwiperSlide>
-                    <SwiperSlide className="text-center">
-                      <div className="music-thumbnail position-relative mb-3">
-                        <Link to="#">
-                          <img
-                            src={imgn3}
-                            alt="music-thumb"
-                            className="img-fluid w-100"
-                          />
-                        </Link>
-                        <div className="play-btn">
-                          <Link to="#" className="material-symbols-outlined text-white">play_arrow</Link>
-                        </div>
-                      </div>
-                      <h6>Brittany Howard</h6>
-                      <p className="mb-0">Best Advice</p>
-                    </SwiperSlide>
-                    <SwiperSlide className="text-center">
-                      <div className="music-thumbnail position-relative mb-3">
-                        <Link to="#">
-                          <img
-                            src={imgn4}
-                            alt="music-thumb"
-                            className="img-fluid w-100"
-                          />
-                        </Link>
-                        <div className="play-btn">
-                          <Link to="#" className="material-symbols-outlined text-white">play_arrow</Link>
-                        </div>
-                      </div>
-                      <h6>Elton John</h6>
-                      <p className="mb-0">Best Advice</p>
-                    </SwiperSlide>
-                    <SwiperSlide className="text-center">
-                      <div className="music-thumbnail position-relative mb-3">
-                        <Link to="#">
-                          <img
-                            src={imgn5}
-                            alt="music-thumb"
-                            className="img-fluid w-100"
-                          />
-                        </Link>
-                        <div className="play-btn">
-                          <Link to="#" className="material-symbols-outlined text-white">play_arrow</Link>
-                        </div>
-                      </div>
-                      <h6>Tierra Whack</h6>
-                      <p className="mb-0">Best Advice</p>
-                    </SwiperSlide>
-                    <SwiperSlide className="text-center">
-                      <div className="music-thumbnail position-relative mb-3">
-                        <Link to="#">
-                          <img
-                            src={imgn6}
-                            alt="music-thumb"
-                            className="img-fluid w-100"
-                          />
-                        </Link>
-                        <div className="play-btn">
-                          <Link to="#" className="material-symbols-outlined text-white">play_arrow</Link>
-                        </div>
-                      </div>
-                      <h6>Trippie Redd</h6>
-                      <p className="mb-0">Best Advice</p>
-                    </SwiperSlide>
-                    <SwiperSlide className="text-center">
-                      <div className="music-thumbnail position-relative mb-3">
-                        <Link to="#">
-                          <img
-                            src={imgn7}
-                            alt="music-thumb"
-                            className="img-fluid w-100"
-                          />
-                        </Link>
-                        <div className="play-btn">
-                          <Link to="#" className="material-symbols-outlined text-white">play_arrow</Link>
-                        </div>
-                      </div>
-                      <h6>Quincy Jones</h6>
-                      <p className="mb-0">Best Advice</p>
-                    </SwiperSlide>
-                    <SwiperSlide className=" text-center">
-                      <div className="music-thumbnail position-relative mb-3">
-                        <Link to="#">
-                          <img
-                            src={imgn8}
-                            alt="music-thumb"
-                            className="img-fluid w-100"
-                          />
-                        </Link>
-                        <div className="play-btn">
-                          <Link to="#" className="material-symbols-outlined text-white">play_arrow</Link>
-                        </div>
-                      </div>
-                      <h6>Ciara</h6>
-                      <p className="mb-0">Best Advice</p>
-                    </SwiperSlide>
+                        <h6>{album.name}</h6>
+                        <p className="mb-0">{album.artists[0].name}</p>
+                      </SwiperSlide>
+                    ))}
                   </Swiper>
                 </Card.Body>
               </Card>
             </Col>
             <Col sm="12">
               <Card className="card-block card-stretch card-height">
-                <Card.Header className=" d-flex justify-content-between">
+                <Card.Header className="d-flex justify-content-between">
                   <div className="header-title">
                     <h4 className="card-title">Recent Added</h4>
                   </div>
@@ -374,134 +273,32 @@ const Music = () => {
                       },
                     }}
                   >
-                    <SwiperSlide className="text-center">
-                      <div className="music-thumbnail position-relative mb-3">
-                        <Link to="#">
-                          <img
-                            src={imgn8}
-                            alt="music-thumb"
-                            className="img-fluid w-100"
-                          />
-                        </Link>
-                        <div className="play-btn">
-                          <Link to="#" className="material-symbols-outlined text-white">play_arrow</Link>
+                    {recentAdded.map((track, index) => (
+                      <SwiperSlide key={index} className="text-center">
+                        <div className="music-thumbnail position-relative mb-3">
+                          <Link
+                            to="#"
+                            onClick={() => playPreview(track.preview_url, track.id)}
+                          >
+                            <img
+                              src={track.album.images[0]?.url || imgr1}
+                              alt="track-thumb"
+                              className="img-fluid w-100"
+                            />
+                          </Link>
+                          <div className="play-btn">
+                            <Link
+                              to="#"
+                              className="material-symbols-outlined text-white"
+                            >
+                              play_arrow
+                            </Link>
+                          </div>
                         </div>
-                      </div>
-                      <h6>Lizzo</h6>
-                      <p className="mb-0">Best Advice</p>
-                    </SwiperSlide>
-                    <SwiperSlide className="text-center">
-                      <div className="music-thumbnail position-relative mb-3">
-                        <Link to="#">
-                          <img
-                            src={imgr8}
-                            alt="music-thumb"
-                            className="img-fluid w-100"
-                          />
-                        </Link>
-                        <div className="play-btn">
-                          <Link to="#" className="material-symbols-outlined text-white">play_arrow</Link>
-                        </div>
-                      </div>
-                      <h6>Kathleen Hanna</h6>
-                      <p className="mb-0">Best Advice</p>
-                    </SwiperSlide>
-                    <SwiperSlide className="text-center">
-                      <div className="music-thumbnail position-relative mb-3">
-                        <Link to="#">
-                          <img
-                            src={imgn7}
-                            alt="music-thumb"
-                            className="img-fluid w-100"
-                          />
-                        </Link>
-                        <div className="play-btn">
-                          <Link to="#" className="material-symbols-outlined text-white">play_arrow</Link>
-                        </div>
-                      </div>
-                      <h6>Sheryl Crow</h6>
-                      <p className="mb-0">Best Advice</p>
-                    </SwiperSlide>
-                    <SwiperSlide className="text-center">
-                      <div className="music-thumbnail position-relative mb-3">
-                        <Link to="#">
-                          <img
-                            src={imgr1}
-                            alt="music-thumb"
-                            className="img-fluid w-100"
-                          />
-                        </Link>
-                        <div className="play-btn">
-                          <Link to="#" className="material-symbols-outlined text-white">play_arrow</Link>
-                        </div>
-                      </div>
-                      <h6>Karen O</h6>
-                      <p className="mb-0">Best Advice</p>
-                    </SwiperSlide>
-                    <SwiperSlide className="text-center">
-                      <div className="music-thumbnail position-relative mb-3">
-                        <Link to="#">
-                          <img
-                            src={imgn1}
-                            alt="music-thumb"
-                            className="img-fluid w-100"
-                          />
-                        </Link>
-                        <div className="play-btn">
-                          <Link to="#" className="material-symbols-outlined text-white">play_arrow</Link>
-                        </div>
-                      </div>
-                      <h6>Cyndi Lauper</h6>
-                      <p className="mb-0">Best Advice</p>
-                    </SwiperSlide>
-                    <SwiperSlide className="text-center">
-                      <div className="music-thumbnail position-relative mb-3">
-                        <Link to="#">
-                          <img
-                            src={imgr2}
-                            alt="music-thumb"
-                            className="img-fluid w-100"
-                          />
-                        </Link>
-                        <div className="play-btn">
-                          <Link to="#" className="material-symbols-outlined text-white">play_arrow</Link>
-                        </div>
-                      </div>
-                      <h6>Rick Ross</h6>
-                      <p className="mb-0">Best Advice</p>
-                    </SwiperSlide>
-                    <SwiperSlide className="text-center">
-                      <div className="music-thumbnail position-relative mb-3">
-                        <Link to="#">
-                          <img
-                            src={imgr7}
-                            alt="music-thumb"
-                            className="img-fluid w-100"
-                          />
-                        </Link>
-                        <div className="play-btn">
-                          <Link to="#" className="material-symbols-outlined text-white">play_arrow</Link>
-                        </div>
-                      </div>
-                      <h6>Kamasi Washington</h6>
-                      <p className="mb-0">Best Advice</p>
-                    </SwiperSlide>
-                    <SwiperSlide className="text-center">
-                      <div className="music-thumbnail position-relative mb-3">
-                        <Link to="#">
-                          <img
-                            src={imgn2}
-                            alt="music-thumb"
-                            className="img-fluid w-100"
-                          />
-                        </Link>
-                        <div className="play-btn">
-                          <Link to="#" className="material-symbols-outlined text-white">play_arrow</Link>
-                        </div>
-                      </div>
-                      <h6>Christina Aguilera</h6>
-                      <p className="mb-0">Best Advice</p>
-                    </SwiperSlide>
+                        <h6>{track.name}</h6>
+                        <p className="mb-0">{track.artists[0].name}</p>
+                      </SwiperSlide>
+                    ))}
                   </Swiper>
                 </Card.Body>
               </Card>
@@ -542,134 +339,32 @@ const Music = () => {
                       },
                     }}
                   >
-                    <SwiperSlide className="text-center">
-                      <div className="music-thumbnail position-relative mb-3">
-                        <Link to="#">
-                          <img
-                            src={imgr1}
-                            alt="music-thumb"
-                            className="img-fluid w-100"
-                          />
-                        </Link>
-                        <div className="play-btn">
-                          <Link to="#" className="material-symbols-outlined text-white">play_arrow</Link>
+                    {topMusic.map((track, index) => (
+                      <SwiperSlide key={index} className="text-center">
+                        <div className="music-thumbnail position-relative mb-3">
+                          <Link
+                            to="#"
+                            onClick={() => playPreview(track.preview_url, track.id)}
+                          >
+                            <img
+                              src={track.album.images[0]?.url || imgr1}
+                              alt="top-track-thumb"
+                              className="img-fluid w-100"
+                            />
+                          </Link>
+                          <div className="play-btn">
+                            <Link
+                              to="#"
+                              className="material-symbols-outlined text-white"
+                            >
+                              play_arrow
+                            </Link>
+                          </div>
                         </div>
-                      </div>
-                      <h6>Mary J. Blige</h6>
-                      <p className="mb-0">Best Advice</p>
-                    </SwiperSlide>
-                    <SwiperSlide className="text-center">
-                      <div className="music-thumbnail position-relative mb-3">
-                        <Link to="#">
-                          <img
-                            src={imgr2}
-                            alt="music-thumb"
-                            className="img-fluid w-100"
-                          />
-                        </Link>
-                        <div className="play-btn">
-                          <Link to="#" className="material-symbols-outlined text-white">play_arrow</Link>
-                        </div>
-                      </div>
-                      <h6>Ne-Yo</h6>
-                      <p className="mb-0">Best Advice</p>
-                    </SwiperSlide>
-                    <SwiperSlide className="text-center">
-                      <div className="music-thumbnail position-relative mb-3">
-                        <Link to="#">
-                          <img
-                            src={imgr3}
-                            alt="music-thumb"
-                            className="img-fluid w-100"
-                          />
-                        </Link>
-                        <div className="play-btn">
-                          <Link to="#" className="material-symbols-outlined text-white">play_arrow</Link>
-                        </div>
-                      </div>
-                      <h6>Loric Sih</h6>
-                      <p className="mb-0">Best Advice</p>
-                    </SwiperSlide>
-                    <SwiperSlide className="text-center">
-                      <div className="music-thumbnail position-relative mb-3">
-                        <Link to="#">
-                          <img
-                            src={imgr4}
-                            alt="music-thumb"
-                            className="img-fluid w-100"
-                          />
-                        </Link>
-                        <div className="play-btn">
-                          <Link to="#" className="material-symbols-outlined text-white">play_arrow</Link>
-                        </div>
-                      </div>
-                      <h6>Annie Flook</h6>
-                      <p className="mb-0">Best Advice</p>
-                    </SwiperSlide>
-                    <SwiperSlide className="text-center">
-                      <div className="music-thumbnail position-relative mb-3">
-                        <Link to="#">
-                          <img
-                            src={imgr5}
-                            alt="music-thumb"
-                            className="img-fluid w-100"
-                          />
-                        </Link>
-                        <div className="play-btn">
-                          <Link to="#" className="material-symbols-outlined text-white">play_arrow</Link>
-                        </div>
-                      </div>
-                      <h6>Alex Gvojic</h6>
-                      <p className="mb-0">Best Advice</p>
-                    </SwiperSlide>
-                    <SwiperSlide className="text-center">
-                      <div className="music-thumbnail position-relative mb-3">
-                        <Link to="#">
-                          <img
-                            src={imgr6}
-                            alt="music-thumb"
-                            className="img-fluid w-100"
-                          />
-                        </Link>
-                        <div className="play-btn">
-                          <Link to="#" className="material-symbols-outlined text-white">play_arrow</Link>
-                        </div>
-                      </div>
-                      <h6>Mindy Monk</h6>
-                      <p className="mb-0">Best Advice</p>
-                    </SwiperSlide>
-                    <SwiperSlide className="text-center">
-                      <div className="music-thumbnail position-relative mb-3">
-                        <Link to="#">
-                          <img
-                            src={imgr7}
-                            alt="music-thumb"
-                            className="img-fluid w-100"
-                          />
-                        </Link>
-                        <div className="play-btn">
-                          <Link to="#" className="material-symbols-outlined text-white">play_arrow</Link>
-                        </div>
-                      </div>
-                      <h6>Coffey Rock</h6>
-                      <p className="mb-0">Best Advice</p>
-                    </SwiperSlide>
-                    <SwiperSlide className="text-center">
-                      <div className="music-thumbnail position-relative mb-3">
-                        <Link to="#">
-                          <img
-                            src={imgr8}
-                            alt="music-thumb"
-                            className="img-fluid w-100"
-                          />
-                        </Link>
-                        <div className="play-btn">
-                          <Link to="#" className="material-symbols-outlined text-white">play_arrow</Link>
-                        </div>
-                      </div>
-                      <h6>Sam Smith</h6>
-                      <p className="mb-0">Best Advice</p>
-                    </SwiperSlide>
+                        <h6>{track.name}</h6>
+                        <p className="mb-0">{track.artists[0].name}</p>
+                      </SwiperSlide>
+                    ))}
                   </Swiper>
                 </Card.Body>
               </Card>
@@ -680,4 +375,5 @@ const Music = () => {
     </>
   );
 };
+
 export default Music;
