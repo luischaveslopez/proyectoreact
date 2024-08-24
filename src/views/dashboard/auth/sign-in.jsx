@@ -73,13 +73,7 @@ const SignIn = () => {
         title: 'Sign In Successful',
         text: 'Welcome back to Jammify!',
       }).then(() => {
-        if(email === 'admin@gmail.com'){
-        setUserRole('admin');
-        navigate("/admin/dashboard");
-      } else{
-        setUserRole('user');
-        navigate('/')
-      }
+        navigate("/");
       });
     } catch (error) {
       Swal.fire({
