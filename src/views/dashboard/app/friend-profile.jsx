@@ -1,10 +1,14 @@
 import React, { useState, useEffect } from "react";
-import { Row, Col, Container } from "react-bootstrap";
+import { Row, Col, Container, Dropdown } from "react-bootstrap";
 import { collection, query, where, onSnapshot, getDocs } from "firebase/firestore";
 import { db } from '../../../config/firebase';
 import Card from "../../../components/Card";
+
+
+import CustomToggle from "../../../components/dropdowns";
 import { Link, useParams } from "react-router-dom";
 import ReactFsLightbox from "fslightbox-react";
+import ShareOffcanvas from "../../../components/share-offcanvas";
 import Post from "../../../components/Post"
 
 // images
@@ -100,6 +104,13 @@ const FriendProfile = () => {
     if (!userData) {
       return <div>No user found</div>;
     }
+
+  function imageOnSlide(number) {
+    setImageController({
+      toggler: !imageController.toggler,
+      slide: number,
+    });
+  }
 
   return (
     <>

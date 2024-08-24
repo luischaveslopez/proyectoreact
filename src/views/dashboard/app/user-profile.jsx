@@ -8,14 +8,14 @@ import {
   Tab,
 } from "react-bootstrap";
 import { getAuth } from "firebase/auth";
-import { doc, getDoc, collection, query, where, onSnapshot} from "firebase/firestore"; // Importar las funciones correctamente
+import { doc, getDoc, collection, query, where, onSnapshot } from "firebase/firestore"; // Importar las funciones correctamente
 import { db } from '../../../config/firebase'; // Asegúrate de que la ruta sea correcta
 import Card from "../../../components/Card";
 import CreatePost from "../../../components/create-post";
-import Post from "../../../components/Post"
-// import ShareOffcanvas from "../../../components/share-offcanvas";
+import Post from "../../../components/Post";
 import { Link } from "react-router-dom";
 import ReactFsLightbox from "fslightbox-react";
+import Swal from "sweetalert2"; // Importación de SweetAlert2
 
 // images
 import img1 from "../../../assets/images/page-img/fun.webp";
@@ -59,7 +59,6 @@ import busImg from "../../../assets/images/page-img/bus.webp";
 import boyImg from "../../../assets/images/page-img/boy.webp";
 import img11 from "../../../assets/images/page-img/fd.webp";
 
-
 // Fslightbox plugin
 const FsLightbox = ReactFsLightbox.default
   ? ReactFsLightbox.default
@@ -79,7 +78,6 @@ const UserProfile = () => {
   const [instagramLink, setInstagramLink] = useState('');
   const [profilePic, setProfilePic] = useState(user1); // Estado para la foto de perfil con imagen por defecto
   const [aboutData, setAboutData] = useState([]); // Estado para los datos de "about"
-
 
   const auth = getAuth();
   const user = auth.currentUser;
@@ -108,7 +106,6 @@ const UserProfile = () => {
       return () => unsubscribe(); // Cleanup on component unmount
     }
   }, [user]);
-  
 
   useEffect(() => {
     document.body.classList.add("profile-page");
@@ -136,19 +133,19 @@ const UserProfile = () => {
           const userDoc = await getDoc(doc(db, 'users', user.uid));
           if (userDoc.exists()) {
             const data = userDoc.data();
-            setUserName(data.firstName || user.displayName || 'User');
-            setUserCountry(data.country || 'No country available');
+            setUserName(data.username || 'user');
+            setUserCountry(data.country || '');
             setUserWebsite(data.websiteLink || '');
             setTiktokLink(data.tiktokLink || '');
             setSpotifyLink(data.spotifyLink || '');
             setInstagramLink(data.instagramLink || '');
             setProfilePic(data.profilePic || user1);
-  
+
             // Establece los valores de posts, followers y following
             setPosts(data.posts || 0);
             setFollowers(data.followers || 0);
             setFollowing(data.following || 0);
-            
+
             const newAboutData = [
               { title: 'About Me:', data: data.aboutMe || 'No data yet' },
               { title: "Email:", data: data.email || 'No data yet' },
@@ -159,14 +156,14 @@ const UserProfile = () => {
             setAboutData(newAboutData);
           } else {
             // Usuario nuevo o sin datos
-            setUserName(user.displayName || 'User');
+            setUserName('User');
             setUserCountry('No country available');
             setUserWebsite('');
             setTiktokLink('');
             setSpotifyLink('');
             setInstagramLink('');
             setProfilePic(user1);
-  
+
             const newAboutData = [
               { title: 'About Me:', data: 'No data yet' },
               { title: "Email:", data: user.email || 'No data yet' },
@@ -179,7 +176,7 @@ const UserProfile = () => {
         } catch (error) {
           console.error("Error fetching user data: ", error);
           setProfilePic(user1);
-  
+
           const newAboutData = [
             { title: 'About Me:', data: 'Error loading data' },
             { title: "Email:", data: user.email || 'No data yet' },
@@ -188,15 +185,20 @@ const UserProfile = () => {
             { title: "Gender:", data: 'Error loading data' }
           ];
           setAboutData(newAboutData);
+
+          // Mensaje de error usando SweetAlert2
+          Swal.fire({
+            icon: 'error',
+            title: 'Oops...',
+            text: 'Error fetching user data!',
+          });
         }
       }
     };
 
     fetchUserData();
   }, [user]);
-  
-  
-  
+
   return (
     <>
       <div id="content-page" className="content-inner">
@@ -274,83 +276,101 @@ const UserProfile = () => {
                       <Col lg={4} className="profile-left">
                         <div className="social-links">
                           <ul className="social-data-block d-flex align-items-center justify-content-center list-inline p-0 m-0">
-                          <li className="text-center pe-3">
-                            <Link
-                              to={tiktokLink || "#"} // Redirige al enlace de TikTok o a "#" si no hay enlace
-                              target={tiktokLink ? "_blank" : "_self"} // Solo abre en nueva pestaña si hay enlace
-                              rel="noopener noreferrer"
-                              onClick={() => {
-                                if (!tiktokLink) alert("No TikTok link available");
-                              }}
-                            >
-                              <img
-                                src="https://img.icons8.com/?size=100&id=fdfLpA6fsXN2&format=png&color=000000"
-                                className="img-fluid rounded"
-                                alt="tiktok"
-                                width={32}
-                                height={32}
-                                loading="lazy"
-                              />
-                              <text name="socialmedia-name" >tiktok</text>
-                            </Link>
-                          </li>
-                          <li className="text-center pe-3">
-                            <Link
-                              to={spotifyLink || "#"}
-                              target={spotifyLink ? "_blank" : "_self"}
-                              rel="noopener noreferrer"
-                              onClick={() => {
-                                if (!spotifyLink) alert("No Spotify link available");
-                              }}
-                            >
-                              <img
-                                src="https://img.icons8.com/?size=100&id=G9XXzb9XaEKX&format=png&color=000000"
-                                width={32}
-                                height={32}
-                                className="img-fluid rounded"
-                                alt="Spotify"
-                                loading="lazy"
-                              />
-                              <text name="socialmedia-name" >spotify</text>
-                            </Link>
-                          </li>
-                          <li className="text-center pe-3">
-                            <Link
-                              to={instagramLink || "#"}
-                              target={instagramLink ? "_blank" : "_self"}
-                              rel="noopener noreferrer"
-                              onClick={() => {
-                                if (!instagramLink) alert("No Instagram link available");
-                              }}
-                            >
-                              <img
-                                src="https://img.icons8.com/?size=100&id=BrU2BBoRXiWq&format=png&color=000000"
-                                width={32}
-                                height={32}
-                                className="img-fluid rounded"
-                                alt="Instagram"
-                                loading="lazy"
-                              />
-                              <text name="socialmedia-name" >Instagram</text>
-                            </Link>
-                          </li>
+                            <li className="text-center pe-3">
+                              <Link
+                                to={tiktokLink || "#"} // Redirige al enlace de TikTok o a "#" si no hay enlace
+                                target={tiktokLink ? "_blank" : "_self"} // Solo abre en nueva pestaña si hay enlace
+                                rel="noopener noreferrer"
+                                onClick={() => {
+                                  if (!tiktokLink) {
+                                    Swal.fire({
+                                      icon: 'info',
+                                      title: 'TikTok',
+                                      text: 'No TikTok link available',
+                                    });
+                                  }
+                                }}
+                              >
+                                <img
+                                  src="https://img.icons8.com/?size=100&id=fdfLpA6fsXN2&format=png&color=000000"
+                                  className="img-fluid rounded"
+                                  alt="tiktok"
+                                  width={32}
+                                  height={32}
+                                  loading="lazy"
+                                />
+                                <text name="socialmedia-name">tiktok</text>
+                              </Link>
+                            </li>
+                            <li className="text-center pe-3">
+                              <Link
+                                to={spotifyLink || "#"}
+                                target={spotifyLink ? "_blank" : "_self"}
+                                rel="noopener noreferrer"
+                                onClick={() => {
+                                  if (!spotifyLink) {
+                                    Swal.fire({
+                                      icon: 'info',
+                                      title: 'Spotify',
+                                      text: 'No Spotify link available',
+                                    });
+                                  }
+                                }}
+                              >
+                                <img
+                                  src="https://img.icons8.com/?size=100&id=G9XXzb9XaEKX&format=png&color=000000"
+                                  width={32}
+                                  height={32}
+                                  className="img-fluid rounded"
+                                  alt="Spotify"
+                                  loading="lazy"
+                                />
+                                <text name="socialmedia-name">spotify</text>
+                              </Link>
+                            </li>
+                            <li className="text-center pe-3">
+                              <Link
+                                to={instagramLink || "#"}
+                                target={instagramLink ? "_blank" : "_self"}
+                                rel="noopener noreferrer"
+                                onClick={() => {
+                                  if (!instagramLink) {
+                                    Swal.fire({
+                                      icon: 'info',
+                                      title: 'Instagram',
+                                      text: 'No Instagram link available',
+                                    });
+                                  }
+                                }}
+                              >
+                                <img
+                                  src="https://img.icons8.com/?size=100&id=BrU2BBoRXiWq&format=png&color=000000"
+                                  width={32}
+                                  height={32}
+                                  className="img-fluid rounded"
+                                  alt="Instagram"
+                                  loading="lazy"
+                                />
+                                <text name="socialmedia-name">Instagram</text>
+                              </Link>
+                            </li>
                           </ul>
                         </div>
                       </Col>
                       <Col lg={4} className="text-center profile-center">
                         <div className="header-avatar position-relative d-inline-block">
-                        <img
-                          src={profilePic} // Usar la URL de la foto de perfil o la imagen por defecto
-                          alt="user"
-                          className="avatar-150 border border-4 border-white rounded-3"
-                        />
+                          <img
+                            src={profilePic} // Usar la URL de la foto de perfil o la imagen por defecto
+                            alt="user"
+                            className="avatar-150 border border-4 border-white rounded-3"
+                          />
                           <span className="badge bg-success fw-500 letter-spacing-1 chat-status">
                             online
                           </span>
                         </div>
                         <h5 className="d-flex align-items-center justify-content-center gap-1 mb-2">
-                        {userName}{" "}
-                          <span className="badge  bg-primary rounded-pill material-symbols-outlined font-size-14 p-0 custom-done">
+                          {userName}{" "}
+                          <span className="badge bg-primary rounded-pill material-symbols-outlined font-size-14 p-0 custom-done">
                             done
                           </span>
                         </h5>
@@ -379,17 +399,17 @@ const UserProfile = () => {
                         </ul>
                       </Col>
                       <Col lg={4} className="profile-right">
-                      <ul className="user-meta list-inline p-0 d-flex align-items-center justify-content-center">
-                        <li>
-                          <h5>{posts}</h5>Posts
-                        </li>
-                        <li>
-                          <h5>{followers}</h5>Followers
-                        </li>
-                        <li>
-                          <h5>{following}</h5>Following
-                        </li>
-                      </ul>
+                        <ul className="user-meta list-inline p-0 d-flex align-items-center justify-content-center">
+                          <li>
+                            <h5>{posts}</h5>Posts
+                          </li>
+                          <li>
+                            <h5>{followers}</h5>Followers
+                          </li>
+                          <li>
+                            <h5>{following}</h5>Following
+                          </li>
+                        </ul>
                       </Col>
                     </Row>
                   </Card.Body>
@@ -403,12 +423,12 @@ const UserProfile = () => {
                         variant="pills"
                         className="d-flex align-items-center justify-content-center profile-feed-items p-0 m-0 rounded"
                       >
-                        <Nav.Item as="li" className=" col-3 col-sm-4">
+                        <Nav.Item as="li" className="col-3 col-sm-4">
                           <Nav.Link
                             href="#pills-timeline-tab"
                             eventKey="first"
                             role="button"
-                            className=" d-flex flex-md-column align-items-center flex-row justify-content-center gap-2"
+                            className="d-flex flex-md-column align-items-center flex-row justify-content-center gap-2"
                           >
                             <span className="icon rounded-3">
                               <span className="material-symbols-outlined">
@@ -433,7 +453,7 @@ const UserProfile = () => {
                             <p className="mb-0 mt-0 mt-md-3">About</p>
                           </Nav.Link>
                         </Nav.Item>
-                        <Nav.Item as="li" className=" col-3 col-sm-4 ">
+                        <Nav.Item as="li" className="col-3 col-sm-4 ">
                           <Nav.Link
                             href="#pills-friends-tab"
                             eventKey="third"
@@ -448,7 +468,6 @@ const UserProfile = () => {
                             <p className="mb-0 mt-0 mt-md-3">Friends</p>
                           </Nav.Link>
                         </Nav.Item>
-
                       </Nav>
                     </div>
                   </Card.Body>
@@ -457,12 +476,10 @@ const UserProfile = () => {
               <Col sm={12}>
                 <Tab.Content>
                   <Tab.Pane eventKey="first">
-                    <Card.Body className=" p-0">
+                    <Card.Body className="p-0">
                       <Row>
                         <Col lg={4}>
-
                           <div className="fixed-suggestion mb-0 mb-lg-4">
-
                             <Card>
                               <div className="card-header d-flex justify-content-between border-bottom">
                                 <div className="header-title">
@@ -513,43 +530,38 @@ const UserProfile = () => {
                                     <h6 className="mt-2 text-center">Greta Life</h6>
                                   </div>
                                 </div>
-
                               </Card.Body>
                             </Card>
                           </div>
                         </Col>
- 
                         <Col lg={8}>
                           <Row>
                             <Col sm={12}>
                               <CreatePost />
                             </Col>
-                            
                             <Row>
-                            {userPosts.length > 0 ? (
-                              userPosts.map((post) => (
-                                <Col sm={12} className="special-post" key={post.id}>
-                                  <Post
-                                    postId={post.id}
-                                    user={post.user}
-                                    postText={post.postText}
-                                    hashtags={post.hashtags}
-                                    selectedItemImage={post.selectedItemImage}
-                                    selectedItemInfo={post.selectedItemInfo}
-                                    selectedItemType={post.selectedItemType}
-                                    createdAt={post.createdAt}
-                                    comments={Array.isArray(post.comments) ? post.comments.length : 0} // Verificamos si `comments` es un array
-                                    shares={post.shares || 0}
-                                    onPostClick={() => console.log(`Clicked post: ${post.id}`)}
-                                  />
-                                </Col>
-                              ))
-                            ) : (
-                              <p>No posts available</p>
-                            )}
-                          </Row>
-
-
+                              {userPosts.length > 0 ? (
+                                userPosts.map((post) => (
+                                  <Col sm={12} className="special-post" key={post.id}>
+                                    <Post
+                                      postId={post.id}
+                                      user={post.user}
+                                      postText={post.postText}
+                                      hashtags={post.hashtags}
+                                      selectedItemImage={post.selectedItemImage}
+                                      selectedItemInfo={post.selectedItemInfo}
+                                      selectedItemType={post.selectedItemType}
+                                      createdAt={post.createdAt}
+                                      comments={Array.isArray(post.comments) ? post.comments.length : 0} // Verificamos si `comments` es un array
+                                      shares={post.shares || 0}
+                                      onPostClick={() => console.log(`Clicked post: ${post.id}`)}
+                                    />
+                                  </Col>
+                                ))
+                              ) : (
+                                <p>No posts available</p>
+                              )}
+                            </Row>
                           </Row>
                         </Col>
                       </Row>
@@ -567,19 +579,18 @@ const UserProfile = () => {
                             <Card.Body>
                               <Nav
                                 variant="pills"
-                                className=" basic-info-items list-inline d-block p-0 m-0"
+                                className="basic-info-items list-inline d-block p-0 m-0"
                               >
                                 <Nav.Item>
                                   <Nav.Link to="#" eventKey="about1">
                                     Basic Info
                                   </Nav.Link>
                                 </Nav.Item>
-        
                               </Nav>
                             </Card.Body>
                           </Card>
                         </Col>
-                        <Col md={8} className=" ps-4">
+                        <Col md={8} className="ps-4">
                           <Card>
                             <Card.Body>
                               <Tab.Content>
@@ -601,8 +612,6 @@ const UserProfile = () => {
                                     </table>
                                   </div>
                                 </Tab.Pane>
-
-                            
                               </Tab.Content>
                             </Card.Body>
                           </Card>
@@ -622,7 +631,7 @@ const UserProfile = () => {
                             <Nav
                               variant="pills"
                               as="ul"
-                              className=" d-flex align-items-center justify-content-left item-list-tabs  p-0 mb-4"
+                              className="d-flex align-items-center justify-content-left item-list-tabs p-0 mb-4"
                             >
                               <Nav.Item>
                                 <Nav.Link
@@ -632,7 +641,6 @@ const UserProfile = () => {
                                   All Friends
                                 </Nav.Link>
                               </Nav.Item>
-  
                             </Nav>
                             <Tab.Content>
                               <Tab.Pane eventKey="all-friends">
@@ -661,20 +669,11 @@ const UserProfile = () => {
                                                 <i className="material-symbols-outlined me-2">
                                                   done
                                                 </i>
-                                                Friend
+                                                Follow
                                               </Dropdown.Toggle>
                                               <Dropdown.Menu className="dropdown-menu-right">
                                                 <Dropdown.Item href="#">
-                                                  Get Notification
-                                                </Dropdown.Item>
-                                                <Dropdown.Item href="#">
-                                                  Close Friend
-                                                </Dropdown.Item>
-                                                <Dropdown.Item href="#">
                                                   Unfollow
-                                                </Dropdown.Item>
-                                                <Dropdown.Item href="#">
-                                                  Unfriend
                                                 </Dropdown.Item>
                                                 <Dropdown.Item href="#">
                                                   Block
@@ -708,20 +707,11 @@ const UserProfile = () => {
                                                 <i className="material-symbols-outlined me-2">
                                                   done
                                                 </i>
-                                                Friend
+                                                Follow
                                               </Dropdown.Toggle>
                                               <Dropdown.Menu className="dropdown-menu-right">
                                                 <Dropdown.Item href="#">
-                                                  Get Notification
-                                                </Dropdown.Item>
-                                                <Dropdown.Item href="#">
-                                                  Close Friend
-                                                </Dropdown.Item>
-                                                <Dropdown.Item href="#">
                                                   Unfollow
-                                                </Dropdown.Item>
-                                                <Dropdown.Item href="#">
-                                                  Unfriend
                                                 </Dropdown.Item>
                                                 <Dropdown.Item href="#">
                                                   Block
@@ -756,20 +746,11 @@ const UserProfile = () => {
                                                 <i className="material-symbols-outlined me-2">
                                                   done
                                                 </i>
-                                                Friend
+                                                Follow
                                               </Dropdown.Toggle>
                                               <Dropdown.Menu className="dropdown-menu-right">
                                                 <Dropdown.Item href="#">
-                                                  Get Notification
-                                                </Dropdown.Item>
-                                                <Dropdown.Item href="#">
-                                                  Close Friend
-                                                </Dropdown.Item>
-                                                <Dropdown.Item href="#">
                                                   Unfollow
-                                                </Dropdown.Item>
-                                                <Dropdown.Item href="#">
-                                                  Unfriend
                                                 </Dropdown.Item>
                                                 <Dropdown.Item href="#">
                                                   Block
@@ -803,20 +784,11 @@ const UserProfile = () => {
                                                 <i className="material-symbols-outlined me-2">
                                                   done
                                                 </i>
-                                                Friend
+                                                Follow
                                               </Dropdown.Toggle>
                                               <Dropdown.Menu className="dropdown-menu-right">
                                                 <Dropdown.Item href="#">
-                                                  Get Notification
-                                                </Dropdown.Item>
-                                                <Dropdown.Item href="#">
-                                                  Close Friend
-                                                </Dropdown.Item>
-                                                <Dropdown.Item href="#">
                                                   Unfollow
-                                                </Dropdown.Item>
-                                                <Dropdown.Item href="#">
-                                                  Unfriend
                                                 </Dropdown.Item>
                                                 <Dropdown.Item href="#">
                                                   Block
@@ -827,11 +799,9 @@ const UserProfile = () => {
                                         </div>
                                       </div>
                                     </div>
-      
                                   </Row>
                                 </Card.Body>
                               </Tab.Pane>
-
                             </Tab.Content>
                           </div>
                         </Card.Body>
